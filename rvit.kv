@@ -1,0 +1,125 @@
+#:kivy 1.0
+#:import kci kivy.core.image
+#:import LineRenderer rvit.core.vis.line_renderer
+#:import ArrayRenderer rvit.core.vis.array_renderer
+#:import PointRenderer rvit.core.vis.point_renderer
+#:import VectorTracker rvit.core.vis.vector_tracker
+#:import ScalarTracker rvit.core.vis.scalar_tracker
+#:import RVIButton rvit.core.int.rvi_button
+#:import RVISlider rvit.core.int.rvi_slider
+#:import SpriteRenderer rvit.core.vis.sprite_renderer
+
+FloatLayout:
+    SpriteRenderer:
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        xmin: -1.15
+        xmax: 1.15
+        ymin: -1.15
+        ymax: 1.15
+        x_data: 'body.x'
+        y_data: 'body.y'
+        rot_data: 'body.α'
+        sprite_size: 0.1
+        unique_name: 'body_overhead' ## oddity: this has to come after everything else
+        image: kci.Image('img/2drobot.png').texture
+        show_controls: False
+    LineRenderer:
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        xmin: -1.15
+        xmax: 1.15
+        ymin: -1.15
+        ymax: 1.15
+        x_data: 'wall_lines[:,0]'
+        y_data: 'wall_lines[:,1]'
+        show_controls: False
+        unique_name: 'walls'
+            
+    VectorTracker:
+        ymin: '-2.11'
+        ymax: '2.11'
+        pos_hint: {'x':0.75, 'y':0.0}
+        size_hint:  (0.25,0.25)
+        color: [1.0,0.0,0.0,0.5]
+        y_vector: 'body.SMS'
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'None'
+        fill: 'columns'
+        unique_name: 'sensors' ## oddity: this has to come after everything else
+
+    ArrayRenderer: # A Visualizer 
+        array_data: 'body.m_h[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: np.log(x)'
+        pos_hint: {'x':0.75, 'y':0.25}
+        size_hint:  (0.25,0.125)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'Reds_r'
+        show_controls: True  
+        unique_name: 'motors'   # a unique identifier for this visualizer
+
+    ArrayRenderer: # A Visualizer 
+        array_data: 'body.s_h[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: np.log(x)'
+        pos_hint: {'x':0.75, 'y':0.25+0.125}
+        size_hint:  (0.25,0.125)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'Greens_r'
+        show_controls: True       
+        unique_name: 'sensors'   # a unique identifier for this visualizer
+
+    ArrayRenderer: # A Visualizer 
+        array_data: 'brain.prediction_h[0:2,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: np.log(x)'
+        pos_hint: {'x':0.75, 'y':0.75}
+        size_hint:  (0.25,0.125)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'Purples_r'
+        show_controls: True       
+        unique_name: 'sensor predictions'   # a unique identifier for this visualizer
+
+    ArrayRenderer: # A Visualizer 
+        array_data: 'brain.prediction_h[2:4,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: np.log(x)'
+        pos_hint: {'x':0.75, 'y':0.5+0.125}
+        size_hint:  (0.25,0.125)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'Greys_r'
+        show_controls: True       
+        unique_name: 'motor predictions'   # a unique identifier for this visualizer        
+
+    VectorTracker:
+        pos_hint: {'x':0.75, 'y':0.75+0.125}
+        size_hint:  (0.25,0.125)
+        ymin: 0.0
+        ymax: 25
+        y_vector: 'brain.prediction_errors'
+        unique_name: 'prediction_error'
+
+    VectorTracker:
+        pos_hint: {'x':0.75, 'y':0.5+0.}
+        size_hint:  (0.25,0.125)
+        y_vector_preprocess: 'lambda x: np.log(x,where=x!=0)'
+        ymin: -8.0
+        ymax: 0.0
+        y_vector: 'brain.output_probabilities'
+        unique_name: 'output_probabilities'         
+
+
+# ### Local Variables: ###
+# ### mode: python ###
+# ### python-main-file: "main.py" ###
+# ### End: ###
