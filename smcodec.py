@@ -20,6 +20,8 @@ class SMCodec() :
         onehot[combined_index] = 1
         return tuple(onehot)
     
+
+        
     
     def from_onehot(self,onehot) :
         combined_index = argmax(onehot)

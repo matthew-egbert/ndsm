@@ -36,39 +36,65 @@ class Brain(object) :
         self.model = model
         self.sm_duration = sm_duration
         self.body : Body = self.model.body
+        self.learning_rate_exponent = -3
+        self.DETERMINISTIC_NN_OUTPUT = False
+        self.ZERO_LEARNING_RATE = False
 
-        N_SENSORS = self.body.n_sensors
-        N_MOTORS  = self.body.n_motors
-        nn_input_size = (N_SENSORS + N_MOTORS) * self.sm_duration
-        nn_hidden_size = 20
-        nn_output_size = (self.body.N_ALLOWED_SENSOR_VALUES ** N_SENSORS) * (self.body.N_ALLOWED_MOTOR_VALUES ** N_MOTORS)
+        self.N_SENSORS = self.body.n_sensors
+        self.N_MOTORS  = self.body.n_motors
+        nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.sm_duration        
+        nn_output_size = (self.body.N_ALLOWED_SENSOR_VALUES ** self.N_SENSORS) * (self.body.N_ALLOWED_MOTOR_VALUES ** self.N_MOTORS)
+        nn_hidden_size = nn_output_size*2
 
-        self.nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
+        my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
+        print(my_nn)          
         self.device = "cpu" ; print(f"Using {self.device} device")
-        self.n_model = self.nn.to(self.device)
-        self.learning_rate = 1e-3
+        self.n_model = my_nn.to(self.device)
+        self.learning_rate = exp(self.learning_rate_exponent)
         self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate)
         self.prediction_error = 0.0
         self.prediction_errors = np.zeros(self.model.TIMESERIES_LENGTH)
-        self.prediction_h = np.zeros((N_SENSORS+N_MOTORS, self.model.TIMESERIES_LENGTH))
-
-        self.recent_sms_h = np.zeros((N_SENSORS+N_MOTORS,self.sm_duration))
+        self.prediction_h = np.zeros((self.N_SENSORS+self.N_MOTORS, self.model.TIMESERIES_LENGTH))
+    
+        self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.sm_duration))
+        self.debug_indices = np.zeros_like(self.body.sms_h)
+        for col in range(np.shape(self.debug_indices)[1]) :
+            self.debug_indices[0,col] = col
+            self.debug_indices[1,col] = col+0.1
+            self.debug_indices[2,col] = col+0.2
+            self.debug_indices[3,col] = col+0.3        
         self.output_probabilities = np.zeros(nn_output_size)
+        self.most_recent_output = np.zeros(nn_output_size)
 
     def update_learning_variables(self) :
         """ Updates the things that the network learns from, i.e. the recent
         sensorimotor history and the recent motor output. """
-        input_final_it = self.model.it-2
-        correct_output_it = self.model.it-1
-        self.recent_sms_h = np.roll(self.body.sms_h,-(input_final_it-1),axis=1)[:,0:self.sm_duration]
-        
-        self.correct_sms = np.roll(self.body.sms_h,-(correct_output_it),axis=1)[:,0].flatten()
+
+        input_cols = arange(self.model.it-(self.sm_duration+1),self.model.it-1) % np.shape(self.body.sms_h)[1]
+        target_output_col = (self.model.it-1) % np.shape(self.body.sms_h)[1]
+        #print(f'LEARNING: INPUTCOLS: {input_cols.tolist()} => OUTPUTCOL: {target_output_col}')
+
+        # The recent sensorimotor history is the NN's INPUT
+        self.recent_sms_h = self.body.sms_h[:,input_cols]                        
+
+        # The SMS just after that recent sensorimotor history is the NN's TARGET OUTPUT
+        self.correct_sms = self.body.sms_h[:,target_output_col].flatten()
         self.correct_sms = tuple(self.correct_sms)
         self.correct_output = self.body.smcodec.to_onehot(self.correct_sms)
         
+        # if self.model.it > 65 :
+        #     print(self.recent_sms_h)
+        #     print(self.correct_sms)
+        #     quit()
+                    
     def learn(self) :
-        loss_fn = nn.CrossEntropyLoss()
-        #loss_fn = nn.MSELoss()
+        self.optimizer.zero_grad()
+        self.learning_rate = 10.0**(self.learning_rate_exponent) * (not self.ZERO_LEARNING_RATE)
+        for g in self.optimizer.param_groups:
+            print(self.learning_rate)
+            g['lr'] = self.learning_rate 
+
+        loss_fn = nn.CrossEntropyLoss() #loss_fn = nn.MSELoss()        
         self.n_model.train()
 
         self.update_learning_variables()
@@ -77,33 +103,34 @@ class Brain(object) :
 
         model_out = self.n_model(nn_input)
         loss = loss_fn(model_out,correct_nn_output)
-            
+                
         # Backpropagation
         loss.backward()
         self.optimizer.step()
-        self.optimizer.zero_grad()
+        
 
-        self.prediction_errors[self.model.it%self.model.TIMESERIES_LENGTH] = loss.item()
         self.prediction_error = loss.item()
-        #ps = model_out.detach().numpy()
+                        
         ps = nn.Softmax(dim=0)(model_out)
         ps = ps.detach().numpy()
         self.output_probabilities = ps
 
         output_state_index = np.random.choice(range(len(ps)), p=ps)
+        if self.DETERMINISTIC_NN_OUTPUT :
+            output_state_index = argmax(ps)
+
         output_state = self.body.smcodec.index_to_values(output_state_index)
         output_state = np.array(list(output_state))
-        
-        # print()
-        # print(f'nn_input: {nn_input}')
-        # print(f'correct_nn_output: {correct_nn_output}')# => lm: {olm} rm: {orm}')
-        # print(f'model_out: {model_out} loss: {loss}')        
-        # print(f'ps: {ps} argmax: {argmax(ps)}')
-        # print(f'output_state_index: {output_state_index}')
-        # print(f'output_state: {output_state}')
-        # print(f'correct_sms: {[float(x) for x in self.correct_sms]}')
-        self.prediction_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = output_state
 
+        self.next_motor_state = output_state[self.N_SENSORS:]
+
+        ## update visualizations
+        self.most_recent_output[:] *= 0
+        self.most_recent_output[output_state_index] = 1        
+        self.prediction_errors[self.model.it%self.model.TIMESERIES_LENGTH] = self.prediction_error
+        self.prediction_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = output_state
+        
+        
 
     def prepare_to_iterate(self) :
         self.learn()

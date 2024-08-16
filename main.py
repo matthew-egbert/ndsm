@@ -1,19 +1,14 @@
 from kivy import platform
 from kivy.config import Config
-from kivy.app import App
-from kivy.uix.widget import Widget
 from kivy.clock import Clock
 if platform == 'linux':
     ratio = 2.0
     w = 1920
     Config.set('graphics', 'width', str(int(w)))
     Config.set('graphics', 'height', str(int(w / 2)))
-    #Config.set('graphics', 'fullscreen', 'auto')
+    Config.set('graphics', 'fullscreen', 'false')
 Config.set('kivy', 'log_level', 'debug')  # Set the log level to 'debug'
-
 from rvit.core import init_rvit
-
-import cmath
 import numpy as np
 
 from body import Body
@@ -27,9 +22,11 @@ from world import World
 
 class Model():
     def __init__(self, *args, **kwargs):
+        self.paused = False
         self.it = 0
         self.draw_frequency = 1.0
-        self.TIMESERIES_LENGTH = 256
+        self.TIMESERIES_LENGTH = 64
+        self.TRAIL_LENGTH = 256
         
         self.world : World = World(self)
         self.body : Body = Body(self)
@@ -38,10 +35,10 @@ class Model():
         self.init_env_drawables()
         self.init_body_drawables()
 
-        def iterate(arg):
+        def iterate(arg):            
             self.iterate()
 
-        Clock.schedule_interval(iterate, 1.0 / 500.0)
+        Clock.schedule_interval(iterate, 1/1000.0)
 
     def init_env_drawables(self) :
         self.wall_lines = np.array(self.world.walls, dtype=float).reshape(-1,2)
@@ -50,15 +47,17 @@ class Model():
         pass
         
     def iterate(self):
-        self.it += 1
-        self.brain.prepare_to_iterate()
-        self.body.prepare_to_iterate()
+        if not self.paused:
+            self.it += 1
+            print(f'##### it: {self.it} ')
+            self.brain.prepare_to_iterate()
+            self.body.prepare_to_iterate()
 
-        self.brain.iterate()
-        self.body.iterate()
-        
-        if (self.it % int(self.draw_frequency)) == 0 :   
-            self.updateDrawnArrays()
+            self.brain.iterate()
+            self.body.iterate()
+            
+            if (self.it % int(self.draw_frequency)) == 0 :   
+                self.updateDrawnArrays()
             
     def updateDrawnArrays(self):
         pass
