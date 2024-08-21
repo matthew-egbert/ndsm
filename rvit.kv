@@ -10,25 +10,39 @@
 #:import RVISlider rvit.core.int.rvi_slider
 #:import SpriteRenderer rvit.core.vis.sprite_renderer
 
-#:set timeseries_x 0.25
-#:set timeseries_w 0.75
+#:set timeseries_x 0.51
+#:set timeseries_w 0.49
+#:set physical_world_radius 5
 
 
 FloatLayout:
     SpriteRenderer:
         pos_hint: {'x':0.0, 'y':0.5}
         size_hint:  (0.25,0.5)
-        xmin: -1.1
-        xmax: 1.1
-        ymin: -1.1
-        ymax: 1.1
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
         x_data: 'body.x'
         y_data: 'body.y'
         rot_data: 'body.α'
-        sprite_size: 0.1
+        sprite_size: 0.9 ## this should be the robot's diameter
         unique_name: 'body_overhead' ## oddity: this has to come after everything else
         image: kci.Image('img/2drobot.png').texture
         show_controls: False
+
+    LineRenderer:
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
+        color: [1.0,0.0,1.0,0.5]
+        x_data: 'body.drawable_sensor_lines[:,0]'
+        y_data: 'body.drawable_sensor_lines[:,1]'        
+        show_controls: True
+        unique_name: 'sensors'        
         
     PointRenderer:
         x_data: 'body.x_h'
@@ -36,24 +50,37 @@ FloatLayout:
         pos_hint: {'x':0.0, 'y':0.5}
         size_hint:  (0.25,0.5)
         point_size: 0.1
-        xmin: -1.1
-        xmax: 1.1
-        ymin: -1.1
-        ymax: 1.1
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
         unique_name: 'trail' ## oddity: this has to come after everything else
         show_controls: False
 
     LineRenderer:
         pos_hint: {'x':0.0, 'y':0.5}
         size_hint:  (0.25,0.5)
-        xmin: -1.15
-        xmax: 1.15
-        ymin: -1.15
-        ymax: 1.15
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
         x_data: 'wall_lines[:,0]'
         y_data: 'wall_lines[:,1]'
         show_controls: False
         unique_name: 'walls'
+
+    ArrayRenderer:
+        array_data: 'body.sms_familiarity_matrix'         # a DataSource
+        #array_data_preprocess: 'lambda x: np.log(x)'
+        pos_hint: {'x':0.25, 'y':0.5}
+        size_hint:  (0.25,0.5)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        #gradient: 'Purples_r'
+        show_controls: True       
+        unique_name: 'SMS Familiarity'   # a unique identifier for this visualizer        
             
     VectorTracker:
         ymin: '-2.11'
@@ -70,7 +97,7 @@ FloatLayout:
         unique_name: 'SMS' ## oddity: this has to come after everything else
 
     ArrayRenderer: # A Visualizer 
-        array_data: 'brain.prediction_h[0:2,:]'         # a DataSource
+        array_data: 'brain.prediction_h[0:1,:]'         # a DataSource
         #array_data_preprocess: 'lambda x: np.log(x)'
         pos_hint: {'x':timeseries_x, 'y':0.75}
         size_hint:  (timeseries_w,0.125)        
@@ -124,8 +151,6 @@ FloatLayout:
         gradient: 'Reds_r'
         show_controls: True  
         unique_name: 'motors'   # a unique identifier for this visualizer
-
-
 
     VectorTracker:
         pos_hint: {'x':timeseries_x, 'y':0.75+0.125}

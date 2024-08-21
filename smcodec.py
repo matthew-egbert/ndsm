@@ -4,8 +4,11 @@ from pylab import *
 
 class SMCodec() :
     def __init__(self, variable_values : list[list[float]]) -> None:
+        print("CREATING SMCODEC")
         self.variable_values = variable_values
         self.lens = [len(vv) for vv in self.variable_values]
+        print(self.lens)
+        # quit()
 
     def to_onehot(self, values : np.array) -> list :
         for i,v in enumerate(values) :

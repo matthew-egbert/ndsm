@@ -41,13 +41,12 @@ class Brain(object) :
         self.ZERO_LEARNING_RATE = False
 
         self.N_SENSORS = self.body.n_sensors
-        self.N_MOTORS  = self.body.n_motors
+        self.N_MOTORS  = self.body.n_motors        
         nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.sm_duration        
         nn_output_size = (self.body.N_ALLOWED_SENSOR_VALUES ** self.N_SENSORS) * (self.body.N_ALLOWED_MOTOR_VALUES ** self.N_MOTORS)
         nn_hidden_size = nn_output_size*2
 
-        my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
-        print(my_nn)          
+        my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)        
         self.device = "cpu" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
         self.learning_rate = exp(self.learning_rate_exponent)
@@ -58,11 +57,6 @@ class Brain(object) :
     
         self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.sm_duration))
         self.debug_indices = np.zeros_like(self.body.sms_h)
-        for col in range(np.shape(self.debug_indices)[1]) :
-            self.debug_indices[0,col] = col
-            self.debug_indices[1,col] = col+0.1
-            self.debug_indices[2,col] = col+0.2
-            self.debug_indices[3,col] = col+0.3        
         self.output_probabilities = np.zeros(nn_output_size)
         self.most_recent_output = np.zeros(nn_output_size)
 
@@ -72,7 +66,7 @@ class Brain(object) :
 
         input_cols = arange(self.model.it-(self.sm_duration+1),self.model.it-1) % np.shape(self.body.sms_h)[1]
         target_output_col = (self.model.it-1) % np.shape(self.body.sms_h)[1]
-        #print(f'LEARNING: INPUTCOLS: {input_cols.tolist()} => OUTPUTCOL: {target_output_col}')
+        print(f'LEARNING: INPUTCOLS: {input_cols.tolist()} => OUTPUTCOL: {target_output_col}')
 
         # The recent sensorimotor history is the NN's INPUT
         self.recent_sms_h = self.body.sms_h[:,input_cols]                        
@@ -82,6 +76,9 @@ class Brain(object) :
         self.correct_sms = tuple(self.correct_sms)
         self.correct_output = self.body.smcodec.to_onehot(self.correct_sms)
         
+        print(self.correct_sms)
+        #print(self.correct_output)
+        #quit()
         # if self.model.it > 65 :
         #     print(self.recent_sms_h)
         #     print(self.correct_sms)

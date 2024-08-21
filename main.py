@@ -11,7 +11,7 @@ Config.set('kivy', 'log_level', 'debug')  # Set the log level to 'debug'
 from rvit.core import init_rvit
 import numpy as np
 
-from body import Body
+from body import Body, BraitenbergBody, SimpleBody
 from brain import Brain
 from world import World
 
@@ -29,7 +29,8 @@ class Model():
         self.TRAIL_LENGTH = 256
         
         self.world : World = World(self)
-        self.body : Body = Body(self)
+        #self.body : Body = BraitenbergBody(self)
+        self.body : Body = SimpleBody(self)
         self.brain : Brain = Brain(self)
         
         self.init_env_drawables()

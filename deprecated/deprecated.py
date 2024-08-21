@@ -1,4 +1,13 @@
-       plms = np.array(())
+    def conditional_turning(self):
+        if self.sensor_excitations[LEFT] > 0.1 or self.sensor_excitations[RIGHT] > 0.1 :
+            lmr = max(self.ALLOWED_MOTOR_VALUES)
+            rmr = min(self.ALLOWED_MOTOR_VALUES)            
+        else :
+            lmr = max(self.ALLOWED_MOTOR_VALUES)
+            rmr = max(self.ALLOWED_MOTOR_VALUES)
+        return lmr,rmr
+
+plms = np.array(())
         for h,plm,prm in zip(self.all_possible_histories,plms,plms) :
             #print(f'{list(flatten(h))} : {plm:.3f}, {prm:.3f}')
             probs[str(list(flatten(h)))] = (plm,prm)    
