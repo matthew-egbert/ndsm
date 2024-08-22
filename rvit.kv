@@ -82,22 +82,8 @@ FloatLayout:
         show_controls: True       
         unique_name: 'SMS Familiarity'   # a unique identifier for this visualizer        
             
-    VectorTracker:
-        ymin: '-2.11'
-        ymax: '2.11'
-        pos_hint: {'x':0.75, 'y':0.0}
-        size_hint:  (0.25,0.25)
-        color: [1.0,1.0,1.0,0.5]
-        y_vector: 'body.SMS'
-        column_gap: 0.05
-        ymin: 0.0
-        ymax: 1.0
-        gradient: 'None'
-        fill: 'columns'
-        unique_name: 'SMS' ## oddity: this has to come after everything else
-
     ArrayRenderer: # A Visualizer 
-        array_data: 'brain.prediction_h[0:1,:]'         # a DataSource
+        array_data: 'brain.prediction_h[:,:]'         # a DataSource
         #array_data_preprocess: 'lambda x: np.log(x)'
         pos_hint: {'x':timeseries_x, 'y':0.75}
         size_hint:  (timeseries_w,0.125)        
@@ -107,50 +93,21 @@ FloatLayout:
         ymax: 1.0
         gradient: 'Purples_r'
         show_controls: True       
-        unique_name: 'sensor predictions'   # a unique identifier for this visualizer
+        unique_name: 'prediction'   # a unique identifier for this visualizer
 
     ArrayRenderer: 
-        array_data: 'body.s_h[:,:]'         # a DataSource
-        #array_data_preprocess: 'lambda x: np.log(x)'
+        array_data: 'body.sms_h[:,:]'         # a DataSource
         pos_hint: {'x':timeseries_x, 'y':0.5+0.125}
         size_hint:  (timeseries_w,0.125)        
         xmin: 0.0
         xmax: 1.0
         ymin: 0.0
         ymax: 1.0
+        vmin: -1.05
+        vmax: 1.05
         gradient: 'Greens_r'
         show_controls: True       
-        unique_name: 'sensors'   # a unique identifier for this visualizer
-
-    ArrayRenderer: # A Visualizer 
-        array_data: 'brain.prediction_h[2:4,:]'         # a DataSource
-        #array_data_preprocess: 'lambda x: np.log(x)'
-        pos_hint: {'x':timeseries_x, 'y':0.5}
-        size_hint:  (timeseries_w,0.125)        
-        xmin: 0.0
-        xmax: 1.0
-        ymin: 0.0
-        ymax: 1.0
-        vmin: -1.0
-        vmax: 1.0
-        gradient: 'Greys_r'
-        show_controls: True       
-        unique_name: 'motor predictions'   # a unique identifier for this visualizer        
-
-    ArrayRenderer: 
-        array_data: 'body.m_h[:,:]'         # a DataSource
-        #array_data_preprocess: 'lambda x: np.log(x)'
-        pos_hint: {'x':timeseries_x, 'y':0.5-0.125}
-        size_hint:  (timeseries_w,0.125)        
-        xmin: 0.0
-        xmax: 1.0
-        ymin: 0.0
-        ymax: 1.0
-        vmin: -1.0
-        vmax: 1.0        
-        gradient: 'Reds_r'
-        show_controls: True  
-        unique_name: 'motors'   # a unique identifier for this visualizer
+        unique_name: 'sensorimotor_history'   # a unique identifier for this visualizer
 
     VectorTracker:
         pos_hint: {'x':timeseries_x, 'y':0.75+0.125}

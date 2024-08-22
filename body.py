@@ -36,13 +36,12 @@ class Body(object) :
 
         self.init_sensors(sensor_length, β, γ)
 
-        self.SMS = np.random.rand(self.n_sensors+self.n_motors)
 
         self.h_length = self.model.TIMESERIES_LENGTH
+        self.sms_h = np.ones((self.n_sensors+self.n_motors,self.h_length))*0.0
 
         self.s_h = np.zeros((self.n_sensors,self.h_length)) ## sensor_history ## TODO: can I have s_h and m_h be views of sms_h?
         self.m_h = np.zeros((self.n_motors,self.h_length))
-        self.sms_h = np.ones((self.n_sensors+self.n_motors,self.h_length))*0.0
         self.x_h = np.zeros(self.model.TRAIL_LENGTH)
         self.y_h = np.zeros(self.model.TRAIL_LENGTH)
         self.drawable_sensor_lines = np.zeros((self.n_sensors*2,2))
@@ -54,7 +53,6 @@ class Body(object) :
 
     def set_motors(self,ms) :
         lmi,rmi = ms 
-        print(f'SETTING MOTORS: {lmi} {rmi} ---- ms: {ms}')
         assert(lmi < self.N_ALLOWED_MOTOR_VALUES)
         assert(rmi < self.N_ALLOWED_MOTOR_VALUES)
         assert(lmi >= 0)
@@ -85,13 +83,13 @@ class Body(object) :
                 
     def update_sensors(self):
         ## sensor proximal coords
-        self.spxs = self.x + np.cos(self.α+self.sensors_βs) * self.r
-        self.spys = self.y + np.sin(self.α+self.sensors_βs) * self.r
+        spxs = self.x + np.cos(self.α+self.sensors_βs) * self.r
+        spys = self.y + np.sin(self.α+self.sensors_βs) * self.r
         ## sensor distal coords
-        self.sdxs = self.x + np.cos(self.α+self.sensors_βs) * (self.r+self.sensor_length) 
-        self.sdys = self.y + np.sin(self.α+self.sensors_βs) * (self.r+self.sensor_length)
+        sdxs = self.x + np.cos(self.α+self.sensors_βs) * (self.r+self.sensor_length) 
+        sdys = self.y + np.sin(self.α+self.sensors_βs) * (self.r+self.sensor_length)
 
-        self.sensor_line_segments = [((xp,yp),(xd,yd)) for xp,yp,xd,yd in zip(self.spxs,self.spys,self.sdxs,self.sdys)]
+        self.sensor_line_segments = [((xp,yp),(xd,yd)) for xp,yp,xd,yd in zip(spxs,spys,sdxs,sdys)]
         self.drawable_sensor_lines = np.array(self.sensor_line_segments).reshape(-1,2)
 
         ## line segments to check for intersections
@@ -110,8 +108,11 @@ class Body(object) :
             else :
                 self.raw_sensor_excitations[sensor_index] = 0.0
         
-        self.rounded_sensor_excitations = self.ALLOWED_SENSOR_VALUES[np.digitize(self.raw_sensor_excitations,self.ALLOWED_SENSOR_VALUES,right=True)]
-        self.sensor_excitations = self.rounded_sensor_excitations
+        self.sensor_excitations = self.smcodec.values_to_indices(self.raw_sensor_excitations,0)
+
+        for x in self.sensor_excitations :
+            assert(x < self.N_ALLOWED_SENSOR_VALUES)
+            assert(x >= 0)
 
     def randomizePosition(self) :
         self.x = np.random.rand()
@@ -119,7 +120,7 @@ class Body(object) :
         self.α = np.random.rand()*2.0*np.pi
 
     def prepare_to_iterate(self):
-        ms = [np.digitize(self.model.brain.next_motor_state[n],self.ALLOWED_MOTOR_VALUES,right=True) for n in range(self.n_motors)]
+        ms = self.smcodec.values_to_indices(self.model.brain.next_motor_state,-1)
 
         if self.TRAINING_PHASE :                        
             ms = self.training_motor_output()            
@@ -129,14 +130,13 @@ class Body(object) :
     def iterate(self) :
         #print(f'it: {self.model.it} recording SMS to sms_h[:,{self.model.it%self.h_length}]')
         self.set_motors(self.next_motor_state)
-        self.s_h[:,self.model.it%self.h_length] = self.sensor_excitations
-        self.m_h[:,self.model.it%self.h_length] = self.ms
-        self.sms_h[:,self.model.it%self.h_length] = np.concatenate([self.sensor_excitations,self.ms])
+        self.sms_h[:,self.model.it%self.h_length] = np.concatenate([self.raw_sensor_excitations,self.ms])
         self.dx = 0.0
         self.dy = 0.0
 
         self.update_position()
 
+        ## wrap
         ω = self.model.world.r # world radius
         if self.x > ω : 
             self.x -= 2.0*ω
@@ -150,15 +150,12 @@ class Body(object) :
 
         self.update_sensors()
 
-        self.SMS[self.n_sensors:] = self.ms
-        self.SMS[:self.n_sensors] = self.sensor_excitations
-
         self.x_h[self.model.it % self.model.TRAIL_LENGTH] = self.x
         self.y_h[self.model.it % self.model.TRAIL_LENGTH] = self.y
 
     def update_position(self):
         k = 5.0
-        motor_bias = 0.05
+        motor_bias = 0.25
         lm = self.ms[0] + motor_bias
         rm = self.ms[1]
         self.dx = cos(self.α)*(lm+rm) * k 
@@ -175,7 +172,7 @@ class BraitenbergBody(Body) :
         allowed_sensor_values = np.linspace(0,1,5)
         allowed_motor_values = np.linspace(-1,1.0,5)
 
-        super().__init__(model,DT = 0.01, radius = 0.5, sensor_length=3.0/2.0, β=np.pi/4, γ=0,
+        super().__init__(model,DT = 0.01, radius = 0.5, sensor_length=1.0, β=np.pi/4, γ=0,
                          allowed_motor_values = allowed_motor_values, 
                          allowed_sensor_values = allowed_sensor_values)
 
@@ -187,17 +184,15 @@ class BraitenbergBody(Body) :
         self.l_sensors_βs = np.linspace(-β-γ/2,-β+γ/2,sensors_per_side)
         self.r_sensors_βs = np.linspace(β-γ/2,β+γ/2,sensors_per_side)
         self.sensors_βs = concatenate([self.l_sensors_βs,self.r_sensors_βs])
-        #self.test_motor_mappings()
-
 
     def training_motor_output(self):
+        print(self.sensor_excitations)
         ## braitenberg vehicle (more sensor and motor states)
-        lm = 0.1-0.85*self.sensor_excitations[LEFT] + 0.45*self.sensor_excitations[RIGHT]
-        rm = 0.1-0.85*self.sensor_excitations[RIGHT] + 0.45*self.sensor_excitations[LEFT]           
+        lm = 0.25-0.75*self.sensor_excitations[LEFT] + 0.5*self.sensor_excitations[RIGHT]
+        rm = 0.25-0.75*self.sensor_excitations[RIGHT] + 0.5*self.sensor_excitations[LEFT]           
         lm = np.clip(lm,min(self.ALLOWED_MOTOR_VALUES),max(self.ALLOWED_MOTOR_VALUES))
         rm = np.clip(rm,min(self.ALLOWED_MOTOR_VALUES),max(self.ALLOWED_MOTOR_VALUES))
-        lm = np.digitize(lm,self.ALLOWED_MOTOR_VALUES,right=True) 
-        rm = np.digitize(rm,self.ALLOWED_MOTOR_VALUES,right=True) 
+        lm,rm = self.smcodec.values_to_indices([lm,rm],-1) 
         return lm,rm
 
 
@@ -205,13 +200,14 @@ class SimpleBody(Body) :
     def __init__(self, model) :
 
         allowed_sensor_values = np.linspace(0,1,5)
-        allowed_motor_values = np.linspace(-1,1.0,5)
+        allowed_motor_values = np.linspace(-0.5,0.5,5)
 
         super().__init__(model,DT = 0.01, radius = 1.0, sensor_length=0.333, β=np.pi/4, γ=0,
                          allowed_motor_values = allowed_motor_values, 
                          allowed_sensor_values = allowed_sensor_values,
                          n_sensors=1, 
                          n_motors=1)
+        self.α = 0.0
 
     def init_sensors(self, sensor_length, β, γ):
         self.sensor_length = 0
@@ -221,9 +217,11 @@ class SimpleBody(Body) :
 
     def update_sensors(self):        
         dsq = self.x**2 + self.y**2
-        self.raw_sensor_excitations[0] = 1.0/(1.0+dsq)
-        self.rounded_sensor_excitations = self.ALLOWED_SENSOR_VALUES[np.digitize(self.raw_sensor_excitations,self.ALLOWED_SENSOR_VALUES,right=True)]
+        self.raw_sensor_excitations[0] = 1.0/(1.0+dsq)        
+        discretized_sensor_excitations = self.smcodec.values_to_indices(self.raw_sensor_excitations,0)
+        self.rounded_sensor_excitations = self.ALLOWED_SENSOR_VALUES[discretized_sensor_excitations]
         self.sensor_excitations = self.rounded_sensor_excitations
+        print(self.raw_sensor_excitations, self.sensor_excitations)
 
     def update_position(self):
         k = 5.0       
@@ -238,18 +236,18 @@ class SimpleBody(Body) :
 
     def set_motors(self,ms) :
         ## TODO: this is not yet written, just makes the robot mpove forward
-        only_m = 1
-        print(f'SETTING MOTORS: {only_m} ---- ms: {ms} TODO')
+        only_m = ms
         assert(only_m < self.N_ALLOWED_MOTOR_VALUES)
         assert(only_m >= 0)
 
         self.ms = [self.ALLOWED_MOTOR_VALUES[only_m]]
 
     def training_motor_output(self):
-        t = self.model.it * self.DT
+        t = self.model.it * self.DT *5
         m = cos(t/2)/2
-
-        return m
+        dm = self.smcodec.values_to_indices([m],-1)[0]
+        print(f'm: {m:0.2f} \t dm: {dm} \t --> \t {self.ALLOWED_MOTOR_VALUES[dm]}')
+        return dm
 
 
 if __name__ == '__main__' :

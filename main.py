@@ -25,7 +25,7 @@ class Model():
         self.paused = False
         self.it = 0
         self.draw_frequency = 1.0
-        self.TIMESERIES_LENGTH = 64
+        self.TIMESERIES_LENGTH = 256
         self.TRAIL_LENGTH = 256
         
         self.world : World = World(self)
@@ -50,7 +50,7 @@ class Model():
     def iterate(self):
         if not self.paused:
             self.it += 1
-            print(f'##### it: {self.it} ')
+            #print(f'##### it: {self.it} ')
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
 
