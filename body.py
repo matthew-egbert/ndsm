@@ -9,7 +9,7 @@ RIGHT = 1
 
 
 class Body(object) :
-    def __init__(self, model, DT = 0.01, radius = 1.0, sensor_length = 3.333, β=np.pi/4, γ=0, 
+    def __init__(self, model, DT = 0.01, radius = 1.0, sensor_length = 3.333, β=np.pi/4, γ=0, motor_bias=0.0,
                  allowed_motor_values = [0,1], allowed_sensor_values = [0,1], n_motors=2, n_sensors=2) :
         """ β : gap between L/R sensor clusters
             γ : radial width of each sensor cluster 
@@ -20,6 +20,7 @@ class Body(object) :
         self.y = 0.5
         self.α = 0.1
         self.r = radius
+        self.motor_bias = motor_bias
         self.DT = DT
         self.TRAINING_PHASE = True
 
@@ -61,6 +62,7 @@ class Body(object) :
         # self.LMV = lmi
         # self.RMV = rmi
         self.ms = [self.ALLOWED_MOTOR_VALUES[lmi],self.ALLOWED_MOTOR_VALUES[rmi]]
+        self.motor_index_state = (lmi,rmi)
 
     def test_motor_mappings(self) :        
         for i in range(self.N_ALLOWED_SENSOR_VALUES) :
@@ -72,7 +74,7 @@ class Body(object) :
                         lm = self.ALLOWED_MOTOR_VALUES[k]
                         rm = self.ALLOWED_MOTOR_VALUES[l]
                         oneshot = self.smcodec.to_onehot( (ls,rs,lm,rm) )
-                        ls2,rs2,lm2, rm2 = self.smcodec.from_onehot(oneshot)
+                        ls2,rs2,lm2, rm2 = self.smcodec.values_from_onehot(oneshot)
                         print(f'{ls} {rs} {lm} {rm} \t=> {argmax(oneshot)} \t=> {ls2} {rs2} {lm2} {rm2}')
 
                         assert(ls == ls2)
@@ -130,7 +132,8 @@ class Body(object) :
     def iterate(self) :
         #print(f'it: {self.model.it} recording SMS to sms_h[:,{self.model.it%self.h_length}]')
         self.set_motors(self.next_motor_state)
-        self.sms_h[:,self.model.it%self.h_length] = np.concatenate([self.raw_sensor_excitations,self.ms])
+        print(f'{list(self.sensor_excitations) + list(self.next_motor_state)}')
+        self.sms_h[:,self.model.it%self.h_length] = self.sensor_excitations+self.next_motor_state
         self.dx = 0.0
         self.dy = 0.0
 
@@ -155,8 +158,8 @@ class Body(object) :
 
     def update_position(self):
         k = 5.0
-        motor_bias = 0.25
-        lm = self.ms[0] + motor_bias
+        
+        lm = self.ms[0] + self.motor_bias
         rm = self.ms[1]
         self.dx = cos(self.α)*(lm+rm) * k 
         self.dy = sin(self.α)*(lm+rm) * k 
@@ -172,7 +175,7 @@ class BraitenbergBody(Body) :
         allowed_sensor_values = np.linspace(0,1,5)
         allowed_motor_values = np.linspace(-1,1.0,5)
 
-        super().__init__(model,DT = 0.01, radius = 0.5, sensor_length=1.0, β=np.pi/4, γ=0,
+        super().__init__(model,DT = 0.01, radius = 0.5, sensor_length=1.0, β=np.pi/4, γ=0, motor_bias=0.25,
                          allowed_motor_values = allowed_motor_values, 
                          allowed_sensor_values = allowed_sensor_values)
 
@@ -186,7 +189,6 @@ class BraitenbergBody(Body) :
         self.sensors_βs = concatenate([self.l_sensors_βs,self.r_sensors_βs])
 
     def training_motor_output(self):
-        print(self.sensor_excitations)
         ## braitenberg vehicle (more sensor and motor states)
         lm = 0.25-0.75*self.sensor_excitations[LEFT] + 0.5*self.sensor_excitations[RIGHT]
         rm = 0.25-0.75*self.sensor_excitations[RIGHT] + 0.5*self.sensor_excitations[LEFT]           
@@ -195,6 +197,32 @@ class BraitenbergBody(Body) :
         lm,rm = self.smcodec.values_to_indices([lm,rm],-1) 
         return lm,rm
 
+class PatternBody(Body) :
+    def __init__(self, model) :        
+        allowed_sensor_values = np.linspace(0,1,1)
+        allowed_motor_values = np.linspace(-1,1.0,5)
+
+        super().__init__(model,DT = 0.01, radius = 0.5, sensor_length=1.0, β=np.pi/4, γ=0,
+                         allowed_motor_values = allowed_motor_values, 
+                         allowed_sensor_values = allowed_sensor_values,
+                         n_sensors=1)
+
+    def init_sensors(self, sensor_length, β, γ):
+        self.sensor_length = sensor_length
+        sensors_per_side = self.n_sensors // 2
+        self.raw_sensor_excitations = np.zeros(self.n_sensors)
+        self.sensor_excitations = np.zeros(self.n_sensors)
+        self.l_sensors_βs = np.linspace(-β-γ/2,-β+γ/2,sensors_per_side)
+        self.r_sensors_βs = np.linspace(β-γ/2,β+γ/2,sensors_per_side)
+        self.sensors_βs = concatenate([self.l_sensors_βs,self.r_sensors_βs])
+
+    def training_motor_output(self):
+        z = self.N_ALLOWED_MOTOR_VALUES//2
+        f = self.N_ALLOWED_MOTOR_VALUES-1
+        b = 0
+        moves = [(f,f),(b,b),(b,f),(f,b)]
+        motors = moves[self.model.it % 4]
+        return motors
 
 class SimpleBody(Body) :
     def __init__(self, model) :
@@ -221,7 +249,6 @@ class SimpleBody(Body) :
         discretized_sensor_excitations = self.smcodec.values_to_indices(self.raw_sensor_excitations,0)
         self.rounded_sensor_excitations = self.ALLOWED_SENSOR_VALUES[discretized_sensor_excitations]
         self.sensor_excitations = self.rounded_sensor_excitations
-        print(self.raw_sensor_excitations, self.sensor_excitations)
 
     def update_position(self):
         k = 5.0       
@@ -237,17 +264,17 @@ class SimpleBody(Body) :
     def set_motors(self,ms) :
         ## TODO: this is not yet written, just makes the robot mpove forward
         only_m = ms
-        assert(only_m < self.N_ALLOWED_MOTOR_VALUES)
-        assert(only_m >= 0)
+        assert(only_m[0] < self.N_ALLOWED_MOTOR_VALUES)
+        assert(only_m[0] >= 0)
 
-        self.ms = [self.ALLOWED_MOTOR_VALUES[only_m]]
+        self.ms = [self.ALLOWED_MOTOR_VALUES[only_m[0]]]
 
     def training_motor_output(self):
         t = self.model.it * self.DT *5
         m = cos(t/2)/2
         dm = self.smcodec.values_to_indices([m],-1)[0]
-        print(f'm: {m:0.2f} \t dm: {dm} \t --> \t {self.ALLOWED_MOTOR_VALUES[dm]}')
-        return dm
+        #print(f'm: {m:0.2f} \t dm: {dm} \t --> \t {self.ALLOWED_MOTOR_VALUES[dm]}')
+        return [dm,]
 
 
 if __name__ == '__main__' :

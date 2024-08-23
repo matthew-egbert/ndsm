@@ -9,11 +9,11 @@ class SMCodec() :
         self.lens = [len(vv) for vv in self.variable_values]
         # quit()
 
-    def to_onehot(self, values : np.array) -> list :
-        print(values)
+    def values_to_onehot(self, values : np.array) -> list :
+        #print(values)
         for i,v in enumerate(values) :
             if v > self.variable_values[i][-1] :
-                raise ValueError(f"Value {v} is greater than max allowed value {self.variable_values[i][-1]}")
+                raise ValueError(f"Value {v} is greater than max allowed value {self.variable_values[i][-1]}. SMINDEX: {i}")
             if v < self.variable_values[i][0] :
                 raise ValueError(f"Value {v} is less than max allowed value {self.variable_values[i][0]}")
 
@@ -23,8 +23,22 @@ class SMCodec() :
         onehot = np.zeros(prod(self.lens),dtype=int32)
         onehot[combined_index] = 1
         return tuple(onehot)
+    
+    def indices_to_onehot(self, indices : np.array) -> list :
+        for i,v in enumerate(indices) :
+            if v > len(self.variable_values[i]) :
+                raise ValueError(f"Index {v} is greater than the number of items. SMINDEX: {i}")
+            if v < 0 :
+                raise ValueError(f"Index {v} is less than zero. SMINDEX: {i}")
 
-    def from_onehot(self,onehot) :
+        ons = indices
+
+        combined_index = int(sum(ons * prod(self.lens[i+1:]) for i, ons in enumerate(ons)))
+        onehot = np.zeros(prod(self.lens),dtype=int32)
+        onehot[combined_index] = 1
+        return tuple(onehot)
+
+    def values_from_onehot(self,onehot) :
         combined_index = argmax(onehot)
         ons = []
         for i in range(len(self.lens)):
@@ -37,7 +51,7 @@ class SMCodec() :
     def index_to_values(self,index) :
         onehot = np.zeros(prod(self.lens),dtype=int32)
         onehot[index] = 1
-        return self.from_onehot(tuple(onehot))
+        return self.values_from_onehot(tuple(onehot))
 
     def values_to_indices(self,values,var_index) :
         for v in values :
@@ -55,6 +69,10 @@ class SMCodec() :
         # print(centers)
         # print(f'VALUES[{var_index}]: {values} => {res}')
         return res
+    
+    def all_values_to_indices(self,values) :
+        res = [self.values_to_indices([v],i)[0] for i,v in enumerate(values)]
+        return res
 
 if __name__ == '__main__' :
     N_SENSOR_VALUES = 2
@@ -69,7 +87,7 @@ if __name__ == '__main__' :
 
     # print(argmax(onehot))
     # print(smc.from_onehot(tuple(onehot)))
-    refound = list(smc.from_onehot(onehot))
+    refound = list(smc.values_from_onehot(onehot))
     print(f'{example_values} => {argmax(onehot)} => {refound}')
 
     for index in range(100) :

@@ -1,6 +1,11 @@
 from pylab import *
 
-class World() :
+class EmptyWorld :
+     def __init__(self, *args, **kwargs):
+        self.r = 5.0
+        self.walls = []
+
+class World(EmptyWorld) :
     def __init__(self, *args, **kwargs):
         self.r = 5.0
         c = 0.8

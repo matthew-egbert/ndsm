@@ -11,9 +11,9 @@ Config.set('kivy', 'log_level', 'debug')  # Set the log level to 'debug'
 from rvit.core import init_rvit
 import numpy as np
 
-from body import Body, BraitenbergBody, SimpleBody
+from body import Body, BraitenbergBody, SimpleBody, PatternBody
 from brain import Brain
-from world import World
+from world import World, EmptyWorld
 
 # from kivy.logger import Logger
 # Logger.setLevel(LOG_LEVELS["debug"])
@@ -28,9 +28,11 @@ class Model():
         self.TIMESERIES_LENGTH = 256
         self.TRAIL_LENGTH = 256
         
-        self.world : World = World(self)
+        self.world : World = EmptyWorld(self)
+        #self.world : World = World(self)
         #self.body : Body = BraitenbergBody(self)
         self.body : Body = SimpleBody(self)
+        #self.body : Body = PatternBody(self)
         self.brain : Brain = Brain(self)
         
         self.init_env_drawables()
@@ -50,14 +52,14 @@ class Model():
     def iterate(self):
         if not self.paused:
             self.it += 1
-            #print(f'##### it: {self.it} ')
+            print(f'##### it: {self.it} ')
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
 
             self.brain.iterate()
             self.body.iterate()
             
-            if (self.it % int(self.draw_frequency)) == 0 :   
+            if (self.it % int(self.draw_frequency)) == 100 :   
                 self.updateDrawnArrays()
             
     def updateDrawnArrays(self):

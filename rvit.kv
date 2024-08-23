@@ -84,7 +84,7 @@ FloatLayout:
             
     ArrayRenderer: # A Visualizer 
         array_data: 'brain.prediction_h[:,:]'         # a DataSource
-        #array_data_preprocess: 'lambda x: np.log(x)'
+        array_data_preprocess: 'lambda x: (x/5.0)'
         pos_hint: {'x':timeseries_x, 'y':0.75}
         size_hint:  (timeseries_w,0.125)        
         xmin: 0.0
@@ -97,14 +97,13 @@ FloatLayout:
 
     ArrayRenderer: 
         array_data: 'body.sms_h[:,:]'         # a DataSource
+        array_data_preprocess: 'lambda x: (x/5.0)'
         pos_hint: {'x':timeseries_x, 'y':0.5+0.125}
         size_hint:  (timeseries_w,0.125)        
         xmin: 0.0
         xmax: 1.0
         ymin: 0.0
         ymax: 1.0
-        vmin: -1.05
-        vmax: 1.05
         gradient: 'Greens_r'
         show_controls: True       
         unique_name: 'sensorimotor_history'   # a unique identifier for this visualizer
