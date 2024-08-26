@@ -32,7 +32,6 @@ class SMCodec() :
                 raise ValueError(f"Index {v} is less than zero. SMINDEX: {i}")
 
         ons = indices
-
         combined_index = int(sum(ons * prod(self.lens[i+1:]) for i, ons in enumerate(ons)))
         onehot = np.zeros(prod(self.lens),dtype=int32)
         onehot[combined_index] = 1

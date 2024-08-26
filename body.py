@@ -3,10 +3,8 @@ from scipy.spatial.distance import cdist
 from SweepIntersectorLib.SweepIntersector import SweepIntersector
 from smcodec import SMCodec
 
-
 LEFT = 0
 RIGHT = 1
-
 
 class Body(object) :
     def __init__(self, model, DT = 0.01, radius = 1.0, sensor_length = 3.333, β=np.pi/4, γ=0, motor_bias=0.0,
