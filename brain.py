@@ -28,7 +28,7 @@ class NeuralNetwork(nn.Module):
         return logits
 
 class Brain(object) :
-    def __init__(self, model, sm_duration=4, *args, **kwargs) :
+    def __init__(self, model, sm_duration=100, *args, **kwargs) :
         """
         Brain object for the model. The sm_duration parameter specifies the
         number of time steps of sm history the brain considers.
@@ -40,15 +40,15 @@ class Brain(object) :
         self.DETERMINISTIC_NN_OUTPUT = False
         self.ZERO_LEARNING_RATE = False
 
-        self.N_SENSORS = self.body.n_sensors
-        self.N_MOTORS  = self.body.n_motors
+        self.N_SENSORS = len(self.body.sensors)
+        self.N_MOTORS  = len(self.body.motors)
         nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.sm_duration
-        nn_output_size = (self.body.N_ALLOWED_SENSOR_VALUES ** self.N_SENSORS) * (self.body.N_ALLOWED_MOTOR_VALUES ** self.N_MOTORS)
+        nn_output_size = len(self.body.onehotter.onehot)
         nn_hidden_size = nn_output_size*2
 
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
         print(my_nn)
-        #quit()
+
         self.device = "cpu" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
         self.learning_rate = exp(self.learning_rate_exponent)
@@ -65,30 +65,17 @@ class Brain(object) :
     def update_learning_variables(self) :
         """ Updates the things that the network learns from, i.e. the recent
         sensorimotor history and the recent motor output. """
-
         learning_input_cols = arange(self.model.it-(self.sm_duration+1),self.model.it-1) % np.shape(self.body.sms_h)[1]
         target_output_col = (self.model.it-1) % np.shape(self.body.sms_h)[1]
 
         action_input_cols = arange(self.model.it-(self.sm_duration),self.model.it) % np.shape(self.body.sms_h)[1]
         self.action_input = self.body.sms_h[:,action_input_cols]
-
-        # if self.model.it > 10 :
-        #     print(f'LEARNING: INPUTCOLS: {learning_input_cols.tolist()} => OUTPUTCOL: {target_output_col}')
-        #     print(f'DOING_INPUTCOLS: {action_input_cols.tolist()}')
-        #     quit()
-        # The recent sensorimotor history is the NN's INPUT
         self.recent_sms_h = self.body.sms_h[:,learning_input_cols]
 
         # The SMS just after that recent sensorimotor history is the NN's TARGET OUTPUT
         self.correct_sms = self.body.sms_h[:,target_output_col].flatten()
-        self.correct_sms = tuple(self.correct_sms)
-        self.correct_output = self.body.smcodec.indices_to_onehot(self.correct_sms)
-
-        #print(self.correct_output)
-        # if self.model.it > 65 :
-        #     print(self.recent_sms_h)
-        #     print(self.correct_sms)
-        #     quit()
+        self.body.onehotter.values = self.correct_sms
+        self.correct_output = self.body.onehotter.onehot
 
     def learn(self) :
         self.optimizer.zero_grad()
@@ -114,38 +101,31 @@ class Brain(object) :
 
     def act(self) :
         self.n_model.eval()
-
         nn_input = torch.tensor(self.action_input.flatten(),dtype=torch.float32).to(self.device)
         model_out = self.n_model(nn_input)
-
         ps = nn.Softmax(dim=0)(model_out)
         ps = ps.detach().numpy()
         self.output_probabilities = ps
 
-        output_state_index = np.random.choice(range(len(ps)), p=ps)
         if self.DETERMINISTIC_NN_OUTPUT :
             output_state_index = argmax(ps)
+        else :
+            output_state_index = np.random.choice(range(len(ps)), p=ps)
 
-        output_state = self.body.smcodec.index_to_values(output_state_index)
-        output_state = np.array(list(output_state))
-        osi = self.body.smcodec.all_values_to_indices(output_state)
-        print(f'osi: {osi} => output_state: {output_state}')
-        # print(output_state)
-        # print(osi)
-        # quit()
+        output_onehot = np.zeros(len(ps))
+        output_onehot[output_state_index] = 1
 
-        self.next_motor_state = output_state[self.N_SENSORS:]
+        self.body.onehotter.onehot = output_onehot
+        output_values = self.body.onehotter.values        
+        output_indices = self.body.onehotter.indices
+        
+        self.actual_nn_output = output_values
 
         ## update visualizations
         self.most_recent_output[:] *= 0
         self.most_recent_output[output_state_index] = 1
-
         self.prediction_errors[self.model.it%self.model.TIMESERIES_LENGTH] = self.prediction_error
-
-        self.prediction_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = osi
-        #print(f'output_state_index: {output_state_index} => output_state: {output_state}')
-
-
+        self.prediction_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = output_indices
 
     def prepare_to_iterate(self) :
         self.learn()
