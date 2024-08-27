@@ -49,7 +49,7 @@ class Brain(object) :
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
         print(my_nn)
 
-        self.device = "cpu" ; print(f"Using {self.device} device")
+        self.device = "cuda" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
         self.learning_rate = exp(self.learning_rate_exponent)
         self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate)
@@ -60,22 +60,41 @@ class Brain(object) :
         self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.sm_duration))
         self.debug_indices = np.zeros_like(self.body.sms_h)
         self.output_probabilities = np.zeros(nn_output_size)
+        self.output_probabilities_h = np.zeros((nn_output_size,self.model.TIMESERIES_LENGTH))
         self.most_recent_output = np.zeros(nn_output_size)
 
-    def update_learning_variables(self) :
+    def get_input_output_pair(self, τ : int=0) :
+        """
+        τ : specifies how many iterations previous to the current 
+            time (t) the target output for this training pair is
+        
+        returns a tuple (input, correct_output) where         
+
+            input is the sensorimotor history of length sm_duration
+            correct_output is the sensorimotor state at iteration its_ago
+        """
+        assert(τ >= 0)
+        t = self.model.it
+        smh_length = np.shape(self.body.sms_h)[1]
+        input_cols = arange(t-τ-self.sm_duration,t-τ) % smh_length
+        output_col = (t-τ) % smh_length
+
+        return input_cols, output_col
+
+    def get_learning_pair(self, τ : int=1) :
         """ Updates the things that the network learns from, i.e. the recent
         sensorimotor history and the recent motor output. """
-        learning_input_cols = arange(self.model.it-(self.sm_duration+1),self.model.it-1) % np.shape(self.body.sms_h)[1]
-        target_output_col = (self.model.it-1) % np.shape(self.body.sms_h)[1]
+        learning_input_cols,target_output_col = self.get_input_output_pair(τ=τ)
 
-        action_input_cols = arange(self.model.it-(self.sm_duration),self.model.it) % np.shape(self.body.sms_h)[1]
-        self.action_input = self.body.sms_h[:,action_input_cols]
-        self.recent_sms_h = self.body.sms_h[:,learning_input_cols]
+        # The sensorimotor history just before the target output is the NN's INPUT
+        input = self.body.sms_h[:,learning_input_cols].flatten()
+        # The SMS that follows it is the NN's TARGET OUTPUT
+        self.body.onehotter.values = self.body.sms_h[:,target_output_col]#.flatten()
+        ## but we need the correct output as a onehot
+        correct_output = self.body.onehotter.onehot
 
-        # The SMS just after that recent sensorimotor history is the NN's TARGET OUTPUT
-        self.correct_sms = self.body.sms_h[:,target_output_col].flatten()
-        self.body.onehotter.values = self.correct_sms
-        self.correct_output = self.body.onehotter.onehot
+        return input, correct_output
+
 
     def learn(self) :
         self.optimizer.zero_grad()
@@ -86,9 +105,15 @@ class Brain(object) :
         loss_fn = nn.CrossEntropyLoss()
         self.n_model.train()
 
-        self.update_learning_variables()
-        nn_input = torch.tensor(self.recent_sms_h.flatten(),dtype=torch.float32).to(self.device)
-        correct_nn_output = torch.tensor(self.correct_output,dtype=torch.float32).to(self.device)
+        inputs = []
+        outputs = []
+        for taus in [1,128] :
+            i,o = self.get_learning_pair(τ=1)
+            inputs.append(i)
+            outputs.append(o)
+        
+        nn_input = torch.tensor(inputs,dtype=torch.float32).to(self.device)
+        correct_nn_output = torch.tensor(outputs,dtype=torch.float32).to(self.device)
 
         model_out = self.n_model(nn_input)
         loss = loss_fn(model_out,correct_nn_output)
@@ -101,10 +126,13 @@ class Brain(object) :
 
     def act(self) :
         self.n_model.eval()
-        nn_input = torch.tensor(self.action_input.flatten(),dtype=torch.float32).to(self.device)
+        
+        action_input_cols, _ = self.get_input_output_pair(τ=0)
+        action_input = self.body.sms_h[:,action_input_cols]
+        nn_input = torch.tensor(action_input.flatten(),dtype=torch.float32).to(self.device)
         model_out = self.n_model(nn_input)
         ps = nn.Softmax(dim=0)(model_out)
-        ps = ps.detach().numpy()
+        ps = ps.cpu().detach().numpy()
         self.output_probabilities = ps
 
         if self.DETERMINISTIC_NN_OUTPUT :
@@ -127,11 +155,16 @@ class Brain(object) :
         self.prediction_errors[self.model.it%self.model.TIMESERIES_LENGTH] = self.prediction_error
         self.prediction_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = output_indices
 
+        x = np.log(self.output_probabilities,where=self.output_probabilities>0)
+        x -= min(x)
+        x /= max(x)
+        self.output_probabilities_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = x
+
     def prepare_to_iterate(self) :
         self.learn()
         self.act()
 
     def iterate(self) :
         pass
-        #self.learn()
+
 

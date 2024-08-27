@@ -84,7 +84,6 @@ class Body(object) :
     def iterate(self) :
         for m,next_m in zip(self.motors,self.next_motors) :
             m.value = next_m.value
-            print(m.value)
 
         self.sms_h[:,self.model.it%self.h_length] = [s.value for s in self.sensors] + [m.value for m in self.motors]
 

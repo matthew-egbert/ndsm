@@ -43,15 +43,13 @@ class Model():
         
         
         ## ## BRAITENBERG
-        self.world : World = World(self); self.body : Body = BraitenbergBody(self); self.brain : Brain = Brain(self,sm_duration=50)
+        self.world : World = World(self); self.body : Body = BraitenbergBody(self); self.brain : Brain = Brain(self,sm_duration=64)
         
         ## ## PATTERN
-        #self.world : World = EmptyWorld(self); self.body : Body = PatternBody(self); self.brain : Brain = Brain(self,sm_duration=50)
+        #self.world : World = EmptyWorld(self); self.body : Body = PatternBody(self); self.brain : Brain = Brain(self,sm_duration=4)
         
         ## ## BACK AND FORTH
-        # self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self); self.brain : Brain = Brain(self,sm_duration=50)
-        
-        
+        #self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self); self.brain : Brain = Brain(self,sm_duration=64)
         
         self.init_env_drawables()
         self.init_body_drawables()
@@ -80,7 +78,7 @@ class Model():
     def iterate(self):
         if not self.paused:
             self.it += 1
-            print(f'##### it: {self.it} ')
+            #print(f'##### it: {self.it} ')
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
 

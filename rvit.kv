@@ -10,8 +10,8 @@
 #:import RVISlider rvit.core.int.rvi_slider
 #:import SpriteRenderer rvit.core.vis.sprite_renderer
 
-#:set timeseries_x 0.51
-#:set timeseries_w 0.49
+#:set timeseries_x 0.26
+#:set timeseries_w 0.74
 #:set physical_world_radius 5
 
 
@@ -91,9 +91,9 @@ FloatLayout:
         xmax: 1.0
         ymin: 0.0
         ymax: 1.0
-        gradient: 'Greens_r'
+        gradient: 'Purples_r'
         show_controls: True       
-        unique_name: 'sensorimotor_history'   # a unique identifier for this visualizer
+        unique_name: 'prediction history'   # a unique identifier for this visualizer
 
     VectorTracker:
         pos_hint: {'x':timeseries_x, 'y':0.75+0.125}
@@ -107,7 +107,7 @@ FloatLayout:
         unique_name: 'prediction_error'
 
     VectorTracker:
-        pos_hint: {'x':timeseries_x, 'y':0.25}
+        pos_hint: {'x':timeseries_x, 'y':0.5}
         size_hint:  (timeseries_w,0.125)
         y_vector_preprocess: 'lambda x: np.log(x,where=x!=0)'
         fill: 'columns'
@@ -118,7 +118,7 @@ FloatLayout:
         unique_name: 'log_output_probabilities'         
 
     VectorTracker:
-        pos_hint: {'x':timeseries_x, 'y':0.25}
+        pos_hint: {'x':timeseries_x, 'y':0.5}
         size_hint:  (timeseries_w,0.125)
         #y_vector_preprocess: 'lambda x: np.log(x,where=x!=0)'
         fill: 'columns'
@@ -128,6 +128,19 @@ FloatLayout:
         y_vector: 'brain.most_recent_output'
         unique_name: 'most_recent_output'
         show_controls: False
+
+    ArrayRenderer: 
+        array_data: 'brain.output_probabilities_h[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: 8+0.1*np.log(x,where=x!=0)'
+        pos_hint: {'x':timeseries_x, 'y':0.0}
+        size_hint:  (timeseries_w,0.5)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'Greys_r'
+        show_controls: True       
+        unique_name: 'output history'   # a unique identifier for this visualizer
 
     RVISlider:
         pos_hint: {'x':0.02 ,'y':0.025}
