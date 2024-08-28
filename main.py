@@ -34,14 +34,17 @@ from world import World, EmptyWorld
 # Logger.debug('title: This is a debug message.')
 
 class Model():
-    def __init__(self, *args, **kwargs):
+    def __init__(self, headless = False, *args, **kwargs):
         self.paused = False
+
         self.it = 0
         self.draw_frequency = 1.0
         self.TIMESERIES_LENGTH = 256
         self.TRAIL_LENGTH = 256
-        
-        
+
+        self.recording_sms = False
+        self.sms_recording_history = None
+
         ## ## BRAITENBERG
         self.world : World = World(self); self.body : Body = BraitenbergBody(self); self.brain : Brain = Brain(self,sm_duration=64)
         
@@ -54,11 +57,15 @@ class Model():
         self.init_env_drawables()
         self.init_body_drawables()
 
-        def iterate(arg):            
-            self.iterate()
+        if not headless :
+            def iterate(arg) :
+                self.iterate()
 
-        Clock.schedule_interval(iterate, 0.0)
-        self.mm = 0
+            Clock.schedule_interval(iterate, 0.0)
+
+        else :
+            while True :
+                self.iterate()
 
         # self.thread = Thread(target=self.run_clock, daemon=True)
         # self.thread.start()
@@ -78,7 +85,7 @@ class Model():
     def iterate(self):
         if not self.paused:
             self.it += 1
-            #print(f'##### it: {self.it} ')
+            print(f'##### it: {self.it} ')
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
 
@@ -87,12 +94,24 @@ class Model():
             
             if (self.it % int(self.draw_frequency)) == 100 :   
                 self.updateDrawnArrays()
+
+            if self.recording_sms:
+                if self.sms_recording_history is None :
+                    self.sms_recording_history = []
+                self.sms_recording_history.append(self.body.sms)                
+            else :
+                if self.sms_recording_history is not None :
+                    self.sms_recording_history = np.array(self.sms_recording_history)
+                    np.save('sms_recording.npy',self.sms_recording_history)
+                    self.sms_recording_history = None
             
     def updateDrawnArrays(self):
         pass
 
 if __name__ == '__main__':
     pass
+    #m = Model(headless=True)
+
     m = Model()
     init_rvit(m,rvit_file='rvit.kv',window_size=(500,250))
     # skivy.activate()

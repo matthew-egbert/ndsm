@@ -1,5 +1,6 @@
 #:kivy 1.0
 #:import kci kivy.core.image
+#:import rvit_colors rvit.core.colors
 #:import LineRenderer rvit.core.vis.line_renderer
 #:import ArrayRenderer rvit.core.vis.array_renderer
 #:import PointRenderer rvit.core.vis.point_renderer
@@ -91,9 +92,9 @@ FloatLayout:
         xmax: 1.0
         ymin: 0.0
         ymax: 1.0
-        gradient: 'Purples_r'
+        gradient: 'Blues_r'
         show_controls: True       
-        unique_name: 'prediction history'   # a unique identifier for this visualizer
+        unique_name: 'Sensorimotor State'   # a unique identifier for this visualizer
 
     VectorTracker:
         pos_hint: {'x':timeseries_x, 'y':0.75+0.125}
@@ -175,6 +176,20 @@ FloatLayout:
         size_hint: (0.06,0.05)
         boolean: 'paused'
         text: 'PAUSED'        
+
+    RVIButton:
+        pos_hint: {'x':0.18 ,'y':0.21}
+        size_hint: (0.06,0.05)
+        background_color: rvit_colors.ORANGE
+        function: 'brain.train_on_file("sms_recording.npy")'
+        text: 'InstaTrain'  
+
+    RVIToggleButton:
+        pos_hint: {'x':0.18 ,'y':0.15}
+        size_hint: (0.06,0.05)
+        background_color: rvit_colors.RED
+        boolean: 'recording_sms'
+        text: 'REC. SMS Hist.'  
 
 
 # ### Local Variables: ###

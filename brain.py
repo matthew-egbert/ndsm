@@ -63,38 +63,79 @@ class Brain(object) :
         self.output_probabilities_h = np.zeros((nn_output_size,self.model.TIMESERIES_LENGTH))
         self.most_recent_output = np.zeros(nn_output_size)
 
-    def get_input_output_pair(self, τ : int=0) :
+    def get_input_output_columns(self, τ : int=0, mod=None) :
         """
-        τ : specifies how many iterations previous to the current 
-            time (t) the target output for this training pair is
+        τ : the index of the data that is the target output
+
+        mod : if None, this defaults to the length of the SMS_h buffer
+              if not None, it specifies the length of the buffer to use 
         
         returns a tuple (input, correct_output) where         
 
             input is the sensorimotor history of length sm_duration
-            correct_output is the sensorimotor state at iteration its_ago
-        """
-        assert(τ >= 0)
-        t = self.model.it
-        smh_length = np.shape(self.body.sms_h)[1]
-        input_cols = arange(t-τ-self.sm_duration,t-τ) % smh_length
-        output_col = (t-τ) % smh_length
+            correct_output is the sensorimotor state at iteration its_ago            
+        """        
+
+        if mod is None :
+            mod = np.shape(self.body.sms_h)[1]
+
+        input_cols = arange(τ-self.sm_duration,τ) % mod
+        output_col = (τ) % mod
 
         return input_cols, output_col
 
-    def get_learning_pair(self, τ : int=1) :
-        """ Updates the things that the network learns from, i.e. the recent
-        sensorimotor history and the recent motor output. """
-        learning_input_cols,target_output_col = self.get_input_output_pair(τ=τ)
+    def get_learning_pair(self, τ : int=1, sms_array = None) :
+        """ 
+        τ : the index of the data that is the target output
+        sms_array : the sensorimotor history to use for training (defaults to self.body.sms_h)
+        """
+        
+        if sms_array is None :
+            sms_array = self.body.sms_h
+            learning_input_cols,target_output_col = self.get_input_output_columns(τ=τ)
+        else :
+            ## used when training from a file
+            learning_input_cols,target_output_col = self.get_input_output_columns(τ=τ,mod=len(sms_array))
 
         # The sensorimotor history just before the target output is the NN's INPUT
-        input = self.body.sms_h[:,learning_input_cols].flatten()
+        input = sms_array[:,learning_input_cols].flatten()
         # The SMS that follows it is the NN's TARGET OUTPUT
-        self.body.onehotter.values = self.body.sms_h[:,target_output_col]#.flatten()
+        self.body.onehotter.values = sms_array[:,target_output_col]#.flatten()
         ## but we need the correct output as a onehot
         correct_output = self.body.onehotter.onehot
 
         return input, correct_output
 
+    def train_on_file(self, filename) :
+        self.optimizer.zero_grad()
+        self.learning_rate = 10.0**(self.learning_rate_exponent) * (not self.ZERO_LEARNING_RATE)
+        for g in self.optimizer.param_groups:
+            g['lr'] = self.learning_rate
+
+        loss_fn = nn.CrossEntropyLoss()
+        self.n_model.train()
+
+        training_data = np.load(filename)
+        training_data = training_data.T
+
+        inputs = []
+        outputs = []
+        for τ in [self.sm_duration+1,np.shape(training_data)[1]] :
+            i,o = self.get_learning_pair(τ=τ,sms_array=training_data) ## WRONG
+            inputs.append(i)
+            outputs.append(o)
+        
+        nn_input = torch.tensor(inputs,dtype=torch.float32).to(self.device)
+        correct_nn_output = torch.tensor(outputs,dtype=torch.float32).to(self.device)
+
+        model_out = self.n_model(nn_input)
+        loss = loss_fn(model_out,correct_nn_output)
+
+        # Backpropagation
+        loss.backward()
+        self.optimizer.step()
+
+        self.prediction_error = loss.item()        
 
     def learn(self) :
         self.optimizer.zero_grad()
@@ -107,8 +148,8 @@ class Brain(object) :
 
         inputs = []
         outputs = []
-        for taus in [1,128] :
-            i,o = self.get_learning_pair(τ=1)
+        for τ in [1,128] :
+            i,o = self.get_learning_pair(τ=self.model.it-τ)
             inputs.append(i)
             outputs.append(o)
         
@@ -127,7 +168,7 @@ class Brain(object) :
     def act(self) :
         self.n_model.eval()
         
-        action_input_cols, _ = self.get_input_output_pair(τ=0)
+        action_input_cols, _ = self.get_input_output_columns(τ=0)
         action_input = self.body.sms_h[:,action_input_cols]
         nn_input = torch.tensor(action_input.flatten(),dtype=torch.float32).to(self.device)
         model_out = self.n_model(nn_input)
