@@ -38,18 +38,17 @@ class Model():
         self.paused = False
 
         self.it = 0
-        self.draw_frequency = 1.0
         self.TIMESERIES_LENGTH = 256
-        self.TRAIL_LENGTH = 256
+        self.TRAIL_LENGTH = self.TIMESERIES_LENGTH
 
         self.recording_sms = False
         self.sms_recording_history = None
 
         ## ## BRAITENBERG
-        self.world : World = World(self); self.body : Body = BraitenbergBody(self); self.brain : Brain = Brain(self,sm_duration=64)
+        #self.world : World = World(self); self.body : Body = BraitenbergBody(self); self.brain : Brain = Brain(self,sm_duration=32)
         
         ## ## PATTERN
-        #self.world : World = EmptyWorld(self); self.body : Body = PatternBody(self); self.brain : Brain = Brain(self,sm_duration=4)
+        self.world : World = EmptyWorld(self); self.body : Body = PatternBody(self); self.brain : Brain = Brain(self,sm_duration=8)
         
         ## ## BACK AND FORTH
         #self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self); self.brain : Brain = Brain(self,sm_duration=64)
@@ -67,6 +66,7 @@ class Model():
             while True :
                 self.iterate()
 
+        #self.brain.train_on_file("sms_recording.npy")
         # self.thread = Thread(target=self.run_clock, daemon=True)
         # self.thread.start()
         #print('hi')
@@ -92,9 +92,6 @@ class Model():
             self.brain.iterate()
             self.body.iterate()
             
-            if (self.it % int(self.draw_frequency)) == 100 :   
-                self.updateDrawnArrays()
-
             if self.recording_sms:
                 if self.sms_recording_history is None :
                     self.sms_recording_history = []
@@ -105,8 +102,6 @@ class Model():
                     np.save('sms_recording.npy',self.sms_recording_history)
                     self.sms_recording_history = None
             
-    def updateDrawnArrays(self):
-        pass
 
 if __name__ == '__main__':
     pass

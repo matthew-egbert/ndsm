@@ -38,8 +38,8 @@ class Body(object) :
         self.x_h = np.zeros(self.model.TRAIL_LENGTH)
         self.y_h = np.zeros(self.model.TRAIL_LENGTH)
         self.drawable_sensor_lines = np.zeros((len(self.sensors)*2,2))
-        # self.sms_familiarity_matrix = np.zeros((len(self.motors,
-        #                                         self.N_ALLOWED_SENSOR_VALUES))
+        self.sms_familiarity_matrix = np.zeros((self.motors[0].allowed_values.shape[0], 
+                                                self.sensors[0].allowed_values.shape[0]))
         self.update_sensors()
 
                 
@@ -97,7 +97,7 @@ class Body(object) :
         if self.y > ω : 
             self.y -= 2.0*ω
 
-        if self.x < -ω : 
+        if self.x < -ω :
             self.x += 2.0*ω
         if self.y < -ω : 
             self.y += 2.0*ω
@@ -106,6 +106,7 @@ class Body(object) :
 
         self.x_h[self.model.it % self.model.TRAIL_LENGTH] = self.x
         self.y_h[self.model.it % self.model.TRAIL_LENGTH] = self.y
+
 
     def update_position(self):
         k = 5.0

@@ -11,8 +11,8 @@
 #:import RVISlider rvit.core.int.rvi_slider
 #:import SpriteRenderer rvit.core.vis.sprite_renderer
 
-#:set timeseries_x 0.26
-#:set timeseries_w 0.74
+#:set timeseries_x 0.51
+#:set timeseries_w 0.49
 #:set physical_world_radius 5
 
 
@@ -72,26 +72,30 @@ FloatLayout:
             
     ArrayRenderer: # A Visualizer 
         array_data: 'brain.prediction_h[:,:]'         # a DataSource
-        array_data_preprocess: 'lambda x: (x/5.0)'
+        #array_data_preprocess: 'lambda x: (x/5.0)'
         pos_hint: {'x':timeseries_x, 'y':0.75}
         size_hint:  (timeseries_w,0.125)        
         xmin: 0.0
         xmax: 1.0
         ymin: 0.0
         ymax: 1.0
+        vmin: -1
+        vmax: 1
         gradient: 'Purples_r'
         show_controls: True       
         unique_name: 'prediction'   # a unique identifier for this visualizer
 
     ArrayRenderer: 
         array_data: 'body.sms_h[:,:]'         # a DataSource
-        array_data_preprocess: 'lambda x: (x/5.0)'
+        #array_data_preprocess: 'lambda x: (x/5.0)'
         pos_hint: {'x':timeseries_x, 'y':0.5+0.125}
         size_hint:  (timeseries_w,0.125)        
         xmin: 0.0
         xmax: 1.0
         ymin: 0.0
         ymax: 1.0
+        vmin: -1
+        vmax: 1     
         gradient: 'Blues_r'
         show_controls: True       
         unique_name: 'Sensorimotor State'   # a unique identifier for this visualizer
@@ -190,6 +194,20 @@ FloatLayout:
         background_color: rvit_colors.RED
         boolean: 'recording_sms'
         text: 'REC. SMS Hist.'  
+
+    ArrayRenderer: 
+        array_data: 'body.sms_familiarity_matrix[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: 8+0.1*np.log(x,where=x!=0)'
+        pos_hint: {'x':0.25, 'y':0.0}
+        size_hint:  (0.25,0.5)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        vmax: 1.0
+        gradient: 'Greys_r'
+        show_controls: True       
+        unique_name: 'familiarity'   # a unique identifier for this visualizer
 
 
 # ### Local Variables: ###

@@ -9,7 +9,7 @@ class BraitenbergBody(Body) :
     def __init__(self, model) :
 
         allowed_sensor_values = np.linspace(0,1,3)
-        allowed_motor_values = np.linspace(-1.0,1.0,3)
+        allowed_motor_values = np.linspace(-1.0,1.0,2)
         ls = DiscVal(allowed_sensor_values, 0, name = "LS")
         rs = DiscVal(allowed_sensor_values, 0, name = "RS")
         lm = DiscVal(allowed_motor_values, 0, name = "LM")
@@ -23,14 +23,14 @@ class BraitenbergBody(Body) :
         ls = self.sensors[0].value
         rs = self.sensors[1].value
 
-        sensor_noise_scale = 0.1
+        sensor_noise_scale = 0.0
         ls += np.random.randn()*sensor_noise_scale
         rs += np.random.randn()*sensor_noise_scale
 
-        lm = 0.25-0.75*ls + 0.5*rs
-        rm = 0.25-0.75*rs + 0.5*ls
+        lm = 0.25-2.0*ls + 0.75*rs
+        rm = 0.25-2.0*rs + 0.75*ls
 
-        motor_noise_scale = 0.3
+        motor_noise_scale = 0.0
         lm += np.random.randn()*motor_noise_scale
         rm += np.random.randn()*motor_noise_scale
 
@@ -40,5 +40,5 @@ class BraitenbergBody(Body) :
         self.next_motors[0].value = lm
         self.next_motors[1].value = rm
 
-        # if self.model.it % 1000 == 0 :
-        #     self.randomize_position()
+        if self.model.it % 1000 == 0 :
+            self.randomize_position()
