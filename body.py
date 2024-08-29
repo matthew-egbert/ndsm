@@ -78,8 +78,8 @@ class Body(object) :
             self.onehotter.values = self.model.brain.actual_nn_output
             for ind in range(len(self.next_motors)) :    
                 self.next_motors[ind].value = self.onehotter.values[len(self.sensors)+ind]
-            print(f'actual nn output: {self.model.brain.actual_nn_output}')
-            print(f'next motors: {[m.value for m in self.next_motors]}')
+            #print(f'actual nn output: {self.model.brain.actual_nn_output}')
+            #print(f'next motors: {[m.value for m in self.next_motors]}')
 
     def iterate(self) :
         for m,next_m in zip(self.motors,self.next_motors) :

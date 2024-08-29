@@ -71,7 +71,7 @@ class Brain(object) :
         self.device = "cuda" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
         self.learning_rate = exp(self.learning_rate_exponent)
-        self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.9)
+        self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.0)
         self.prediction_error = 0.0
         self.prediction_errors = np.zeros(self.model.TIMESERIES_LENGTH)
         self.prediction_h = np.zeros((self.N_SENSORS+self.N_MOTORS, self.model.TIMESERIES_LENGTH))
