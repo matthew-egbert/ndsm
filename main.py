@@ -113,7 +113,7 @@ class Model():
 if __name__ == '__main__':
     
     ## HEADLESS
-    #m = Model(headless=True)
+    m = Model(headless=True)
     
     ## HEADFUL
     from rvit.core import init_rvit

@@ -17,9 +17,9 @@ class PatternExperiment(Experiment):
         self.duration = 500000 #float('inf') # 10000
 
         self.model.training_pattern_length = self.model.TIMESERIES_LENGTH; 
-        self.model.world : World = EmptyWorld(self.model); 
-        self.model.body : Body = PatternBody(self.model, self.model.training_pattern_length, DT=self.model.DT); 
-        self.model.brain : Brain = Brain(self.model,sm_duration=self.model.training_pattern_length)
+        self.model.world = EmptyWorld(self.model); 
+        self.model.body  = PatternBody(self.model, self.model.training_pattern_length, DT=self.model.DT); 
+        self.model.brain = Brain(self.model,sm_duration=self.model.training_pattern_length)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
