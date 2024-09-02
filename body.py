@@ -35,8 +35,8 @@ class Body(object) :
         ## drawables
         self.s_h = np.zeros((len(self.sensors),self.h_length)) ## sensor_history ## TODO: can I have s_h and m_h be views of sms_h?
         self.m_h = np.zeros((len(self.motors),self.h_length))
-        self.x_h = np.zeros(self.model.TRAIL_LENGTH)
-        self.y_h = np.zeros(self.model.TRAIL_LENGTH)
+        self.x_h = np.zeros(self.model.TIMESERIES_LENGTH)
+        self.y_h = np.zeros(self.model.TIMESERIES_LENGTH)
         self.drawable_sensor_lines = np.zeros((len(self.sensors)*2,2))
         self.sms_familiarity_matrix = np.zeros((self.motors[0].allowed_values.shape[0], 
                                                 self.sensors[0].allowed_values.shape[0]))
@@ -104,8 +104,8 @@ class Body(object) :
 
         self.update_sensors()
 
-        self.x_h[self.model.it % self.model.TRAIL_LENGTH] = self.x
-        self.y_h[self.model.it % self.model.TRAIL_LENGTH] = self.y
+        self.x_h[self.model.it % self.model.TIMESERIES_LENGTH] = self.x
+        self.y_h[self.model.it % self.model.TIMESERIES_LENGTH] = self.y
 
 
     def update_position(self):

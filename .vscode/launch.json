@@ -18,6 +18,8 @@
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
+            //"program": "pattern_experiment.py",
+            //"program": "back_and_forth_experiment.py",
             "console": "integratedTerminal"
         }
     ]
