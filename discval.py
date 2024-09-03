@@ -16,6 +16,10 @@ class DiscVal() :
     def clip_value(self, v) :
         return min(max(v, self.min_value), self.max_value)
 
+    def clip_index(self, idx) :
+        return min(max(idx, 0), len(self.allowed_values)-1)
+
+
     @property
     def index(self) :
         return self._index

@@ -43,6 +43,8 @@ class Model():
         self.it = 0
         self.time = 0
         self.DT = 0.01
+        self.sleep_amount = 0.0
+        self.headless = headless
 
         self.TIMESERIES_LENGTH = 1024
 
@@ -57,16 +59,17 @@ class Model():
 
         self.init_env_drawables()
         self.init_body_drawables()
-        if not headless :
+        if not self.headless :
             def iterate(arg) :
-                #sleep(0.01)
-                self.iterate()
+                sleep(self.sleep_amount)
+
+                if self.sleep_amount < 0.5 : ## PAUSE if at max delay
+                    self.iterate()
 
             Clock.schedule_interval(iterate, 0.0)
 
         else :
             while True :
-                
                 self.iterate()
 
         #self.brain.train_on_file("sms_recording.npy")
@@ -88,13 +91,15 @@ class Model():
         
     def iterate(self):
         if not self.paused:
-            #print(f'##### it: {self.it} ')            
+            if not self.headless :
+                print(f'##### it: {self.it} ')            
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
 
             self.brain.iterate()
             self.body.iterate()
-            self.experiment.iterate()
+            if self.headless :
+                self.experiment.iterate()
             
             if self.recording_sms:
                 if self.sms_recording_history is None :
@@ -111,11 +116,18 @@ class Model():
             
 
 if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser("simple_example")
+    #parser.add_argument("counter", help="An integer will be increased by 1 and printed.", type=int)
+    parser.add_argument("--headless", help="Run in headless mode.", action="store_true")
+    args = parser.parse_args()
     
-    ## HEADLESS
-    m = Model(headless=True)
-    
-    ## HEADFUL
-    from rvit.core import init_rvit
-    m = Model()
-    init_rvit(m,rvit_file='rvit.kv',window_size=(500,250))
+    if args.headless:
+        ## HEADLESS
+        m = Model(headless=True)        
+    else:       
+        ## HEADFUL
+        from rvit.core import init_rvit
+        m = Model()
+        init_rvit(m,rvit_file='rvit.kv',window_size=(500,250))

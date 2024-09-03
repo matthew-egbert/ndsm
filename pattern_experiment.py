@@ -101,7 +101,7 @@ if __name__ == '__main__':
     tight_layout()        
     savefig(path+'position_time_slices.png',dpi=300)
 
-    #### TIME SLICED PHASE PLOT
+    #### PHASE PLOT
     figure(figsize=(8,8))
     theta = time%(period*DT) / (period*DT) * 2*np.pi        
     r = sms[:,0] * time

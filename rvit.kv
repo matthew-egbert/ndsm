@@ -157,6 +157,17 @@ FloatLayout:
         scalar: 'brain.learning_rate_exponent'
         unique_name: 'Learning Rate Exponent' 
 
+    RVISlider:
+        pos_hint: {'x':0.08 ,'y':0.025}
+        size_hint: (0.1,0.45)
+        orientation: 'vertical'
+        slider_min: 0.0
+        slider_max: 0.5
+        slider_index: 0
+        scalar: 'sleep_amount'
+        unique_name: 'delay' 
+
+
     RVIToggleButton:
         pos_hint: {'x':0.18 ,'y':0.45}
         size_hint: (0.06,0.05)
@@ -194,6 +205,8 @@ FloatLayout:
         background_color: rvit_colors.RED
         boolean: 'recording_sms'
         text: 'REC. SMS Hist.'  
+
+
 
     ArrayRenderer: 
         array_data: 'body.sms_familiarity_matrix[:,:]'         # a DataSource

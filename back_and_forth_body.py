@@ -6,8 +6,8 @@ from discval import DiscVal
 class BackAndForthBody(Body) :
 
     def __init__(self, model, DT = 0.01) :
-        allowed_sensor_values = np.linspace(0,1,20)
-        allowed_motor_values = np.linspace(-0.5,0.5,20)
+        allowed_sensor_values = np.linspace(0,1,6)
+        allowed_motor_values = np.linspace(-1,1,5)
 
         os = DiscVal(allowed_sensor_values, 0, name = "OS")
         om = DiscVal(allowed_motor_values, 0, name = "OM")
@@ -17,10 +17,17 @@ class BackAndForthBody(Body) :
         self.α = 0.0
         self.x = 0.0
 
+        self.Δ = 0
+
     def update_sensors(self):
         light_pos = 2.5
         dsq = (self.x-light_pos)**2
-        self.sensors[0].value = 1.0/(1.0+dsq)
+
+        noise = 0.0
+        if np.random.rand() < 0.0 :
+            noise = np.random.randn()*0.1
+        v = 1.0/(1.0+dsq) + noise        
+        self.sensors[0].value = self.sensors[0].clip_value(v)
 
     def update_position(self):
         k = 5.0       
@@ -45,18 +52,32 @@ class BackAndForthBody(Body) :
         self.sms_familiarity_matrix[self.sensors[0].index,self.motors[0].index] += 0.1
         self.sms_familiarity_matrix *= 0.99
 
-
     def training_phase(self):
+        # ### time-based training
         # t = self.model.it * self.DT *5
-        # m = cos(t/2)/2
+        # #θ = 4.0*cos(t/2)/2
+        # θ = (2.5+0.25*sin(t/100)) * cos(t/2)/2
+        # m = (θ - self.x) * 0.5
+        # m = self.next_motors[0].clip_value(m)
         # self.next_motors[0].value = m
-        
-        # if self.model.it % 500 == 0 :
-        #     self.x = np.random.randn()*5.0
 
-        t = self.model.it * self.DT *5
-        θ = 4.0*cos(t/2)/2
-        m = (θ - self.x) * 0.5
-        m = self.next_motors[0].clip_value(m)
-        self.next_motors[0].value = m
+        sv = self.sensors[0].value
+        mv = self.motors[0].value
+
+        si = self.sensors[0].index
+        mi = self.motors[0].index
+
+        self.Δ += 1
+
+        δm = 0
+
+        if self.Δ > 5 :
+            if si in [0] :
+                δm = 1
+            elif si in [5] :
+                δm = -1
+            self.Δ = 0 
+        
+        new_mi = self.motors[0].clip_index(mi + δm)
+        self.next_motors[0].index = new_mi
 
