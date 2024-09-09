@@ -5,38 +5,75 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run HEADLESS",
+            "name": "B&F [GUI]",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", ]
+            "args": ["--", "--experiment", "back_and_forth"]
         },
         {
-            "name": "Run GUI",
+            "name": "B&F [HEADLESS]",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "args": ["--", "--headless", "--experiment", "back_and_forth"]
         },
         {
-            "name": "Python: Current File with profiler",
-            "type": "python",
-            "request": "launch",
-            "module": "cProfile",
-            "args": [
-                "-o",
-                "/tmp/tmp.prof",
-                "${file}"
-            ]
-        },
-        {
-            "name": "Generate Experiment Plots (back_and_forth)",
+            "name": "B&F [PLOT RESULTS]",
             "type": "debugpy",
             "request": "launch",
-            //"program": "main.py",
-            //"program": "pattern_experiment.py",
             "program": "back_and_forth_experiment.py",
+            "console": "integratedTerminal"
+        },
+
+
+        {
+            "name": "PATTERN [GUI]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--experiment", "pattern"]
+        },
+        {
+            "name": "PATTERN [HEADLESS]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--headless", "--experiment", "pattern"]
+        },
+        {
+            "name": "PATTERN [PLOT RESULTS]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "pattern_experiment.py",
+            "console": "integratedTerminal"
+        },
+
+        {
+            "name": "BRAITENBERG [GUI]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--experiment", "braitenberg"]
+        },
+        {
+            "name": "BRAITENBERG [HEADLESS]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--headless", "--experiment", "braitenberg"]
+        },
+        {
+            "name": "BRAITENBERG [PLOT RESULTS]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "braitenberg_experiment.py",
             "console": "integratedTerminal"
         }
     ]

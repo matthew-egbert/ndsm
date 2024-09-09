@@ -19,12 +19,27 @@ class PatternBody(Body) :
         z = 0.0
         f = self.motors[0].max_value
         b = self.motors[0].min_value        
-        self.moves = [(f,f),(b,b),(b,f),(f,b)]
-        self.pattern = [self.moves[np.random.randint(len(self.moves))] for idx in range(pattern_length)]
+        F = (f,f)
+        B = (b,b)
+        L = (b,f)
+        R = (f,b)
+        self.moves = [(f,f),(f,f),(f,f),(b,b),(b,f),(f,b)]
+        #self.pattern = [self.moves[np.random.randint(len(self.moves))] for idx in range(pattern_length)]
+        self.pattern = []
+        for idx in range(4) :
+            self.pattern.extend([F,F,F,F,F,R,R,R,R,R,F,F,F,F,L,L])
+        for idx in range(4) :
+            self.pattern.extend([R,B,R,B,R,B,R,B,R,B,F,F,F,F,L,L])
+        for idx in range(4) :
+            self.pattern.extend([F,R,F,R,F,R,F,R,F,R,F,R,F,R,F,R])
+        for idx in range(4) :
+            self.pattern.extend([F,L,L,F,L,L,F,L,L,F,L,L,F,L,L,F])
+        # print(len(self.pattern))
+        # quit()
 
     def update_sensors(self):
-        β = np.pi/4
-        a = self.α % (2*np.pi)
+        # β = np.pi/4
+        # a = self.α % (2*np.pi)
         # if a < (np.pi/2 + β) and a > (np.pi/2 - β) :
         #     self.sensors[0].value = np.random.choice([0.0,1.0])
         # else :

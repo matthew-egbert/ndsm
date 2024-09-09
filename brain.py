@@ -47,13 +47,13 @@ class NDSMDataSet(torch.utils.data.Dataset):
         return self.data[:,input_cols].flatten(), output_onehot
 
 class Brain(object) :
-    def __init__(self, model, sm_duration=100, *args, **kwargs) :
+    def __init__(self, model, input_duration=100, *args, **kwargs) :
         """
         Brain object for the model. The sm_duration parameter specifies the
         number of time steps of sm history the brain considers.
         """
         self.model = model
-        self.sm_duration = sm_duration
+        self.input_duration = input_duration
         self.body : Body = self.model.body
         self.learning_rate_exponent = -3
         self.DETERMINISTIC_NN_OUTPUT = False
@@ -61,9 +61,9 @@ class Brain(object) :
 
         self.N_SENSORS = len(self.body.sensors)
         self.N_MOTORS  = len(self.body.motors)
-        nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.sm_duration
+        nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.input_duration
         nn_output_size = len(self.body.onehotter.onehot)
-        nn_hidden_size = nn_output_size*2
+        nn_hidden_size = nn_input_size * 2 // 3 + nn_output_size
 
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
         print(my_nn)
@@ -76,7 +76,7 @@ class Brain(object) :
         self.prediction_errors = np.zeros(self.model.TIMESERIES_LENGTH)
         self.prediction_h = np.zeros((self.N_SENSORS+self.N_MOTORS, self.model.TIMESERIES_LENGTH))
 
-        self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.sm_duration))
+        self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.input_duration))
         self.debug_indices = np.zeros_like(self.body.sms_h)
         self.output_probabilities = np.zeros(nn_output_size)
         self.output_probabilities_h = np.zeros((nn_output_size,self.model.TIMESERIES_LENGTH))
@@ -98,7 +98,7 @@ class Brain(object) :
         if mod is None :
             mod = np.shape(self.body.sms_h)[1]
 
-        input_cols = arange(τ-self.sm_duration,τ) % mod
+        input_cols = arange(τ-self.input_duration,τ) % mod
         output_col = (τ) % mod
 
         return input_cols, output_col
@@ -136,7 +136,7 @@ class Brain(object) :
 
         print(f'Loading training data from {filename}')
         print(f'size: {np.load(filename).shape}')
-        training_data = NDSMDataSet(np.load(filename).T,self.body.onehotter,input_duration=self.sm_duration)
+        training_data = NDSMDataSet(np.load(filename).T,self.body.onehotter,input_duration=self.input_duration)
         training_data_loader = torch.utils.data.DataLoader(training_data,batch_size=2,shuffle=False,pin_memory=True) ## setting shuffle to True may be dissimilar to usual training
 
         running_loss = 0

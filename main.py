@@ -5,6 +5,7 @@ from kivy.clock import Clock
 
 from back_and_forth_experiment import BackAndForthExperiment
 from back_and_forth_body import BackAndForthBody
+from braitenberg_experiment import BraitenbergExperiment
 from pattern_experiment import PatternExperiment
 
 if platform == 'linux':
@@ -22,13 +23,13 @@ if platform == 'linux':
 
 Config.set('kivy', 'log_level', 'debug')  # Set the log level to 'debug'
 from pattern_body import PatternBody
-from body_braitenberg import BraitenbergBody
+from braitenberg_body import BraitenbergBody
 import numpy as np
 from threading import Thread
 
 from body import Body
 from brain import Brain
-from world import World, EmptyWorld
+from world import BraitenbergWorld, EmptyWorld
 from experiment import Experiment
 
 # from kivy.logger import Logger
@@ -37,7 +38,7 @@ from experiment import Experiment
 # Logger.debug('title: This is a debug message.')
 
 class Model():
-    def __init__(self, headless = False, *args, **kwargs):
+    def __init__(self, headless = False, experiment_class = None, *args, **kwargs):
         self.paused = False
 
         self.it = 0
@@ -51,12 +52,13 @@ class Model():
         self.recording_sms = False
         self.sms_recording_history = None
 
-        ## ## BRAITENBERG
-        #self.world : World = World(self); self.body : Body = BraitenbergBody(self, DT=self.DT); self.brain : Brain = Brain(self,sm_duration=32)
-                    
-        #self.experiment = PatternExperiment(self)
-        self.experiment = BackAndForthExperiment(self)
+        # if experiment_class == None :
+        #     ## ## BRAITENBERG
+        #     self.world : BraitenbergWorld = BraitenbergWorld(self); self.body : Body = BraitenbergBody(self, DT=self.DT); self.brain : Brain = Brain(self,input_duration=32)
+        # else :
+        self.experiment = experiment_class(self)
 
+                    
         self.init_env_drawables()
         self.init_body_drawables()
         if not self.headless :
@@ -121,13 +123,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("simple_example")
     #parser.add_argument("counter", help="An integer will be increased by 1 and printed.", type=int)
     parser.add_argument("--headless", help="Run in headless mode.", action="store_true")
+    parser.add_argument("--experiment", help="Experiment to run.", type=str)
     args = parser.parse_args()
     
+    if args.experiment == 'pattern':
+        experiment = PatternExperiment
+    elif args.experiment == 'back_and_forth':
+        experiment = BackAndForthExperiment
+    elif args.experiment == 'braitenberg':
+        experiment = BraitenbergExperiment
+
     if args.headless:
         ## HEADLESS
-        m = Model(headless=True)        
+        m = Model(headless=True, experiment_class=experiment)        
     else:       
         ## HEADFUL
         from rvit.core import init_rvit
-        m = Model()
+        m = Model(experiment_class=experiment)
         init_rvit(m,rvit_file='rvit.kv',window_size=(500,250))

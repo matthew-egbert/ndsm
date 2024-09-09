@@ -7,7 +7,8 @@ class BackAndForthBody(Body) :
 
     def __init__(self, model, DT = 0.01) :
         allowed_sensor_values = np.linspace(0,1,6)
-        allowed_motor_values = np.linspace(-1,1,5)
+        allowed_motor_values = np.linspace(-0.75,0.75,4)
+        #allowed_motor_values = np.linspace(-1.0,1.0,6)
 
         os = DiscVal(allowed_sensor_values, 0, name = "OS")
         om = DiscVal(allowed_motor_values, 0, name = "OM")
@@ -53,31 +54,28 @@ class BackAndForthBody(Body) :
         self.sms_familiarity_matrix *= 0.99
 
     def training_phase(self):
-        # ### time-based training
-        # t = self.model.it * self.DT *5
-        # #θ = 4.0*cos(t/2)/2
-        # θ = (2.5+0.25*sin(t/100)) * cos(t/2)/2
-        # m = (θ - self.x) * 0.5
-        # m = self.next_motors[0].clip_value(m)
-        # self.next_motors[0].value = m
+        ### time-based training
+        t = self.model.it * self.DT
+        θ = (2.25+0.25*sin(t/20)) * cos(2.0*t)
+        m = (θ - self.x) * 1.0
+        m = self.next_motors[0].clip_value(m)
+        self.next_motors[0].value = m
 
-        sv = self.sensors[0].value
-        mv = self.motors[0].value
+        # ## CONDITIONAL TRAINING
+        # sv = self.sensors[0].value
+        # mv = self.motors[0].value
+        # si = self.sensors[0].index
+        # mi = self.motors[0].index
 
-        si = self.sensors[0].index
-        mi = self.motors[0].index
-
-        self.Δ += 1
-
-        δm = 0
-
-        if self.Δ > 5 :
-            if si in [0] :
-                δm = 1
-            elif si in [5] :
-                δm = -1
-            self.Δ = 0 
+        # self.Δ += 1
+        # δm = 0
+        # if self.Δ > 5 :
+        #     if si in [0] :
+        #         δm = 1
+        #     elif si in [5] :
+        #         δm = -1
+        #     self.Δ = 0 
         
-        new_mi = self.motors[0].clip_index(mi + δm)
-        self.next_motors[0].index = new_mi
+        # new_mi = self.motors[0].clip_index(mi + δm)
+        # self.next_motors[0].index = new_mi
 

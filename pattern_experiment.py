@@ -8,18 +8,21 @@ from experiment import Experiment
 import numpy as np
 from pylab import *
 
-from world import EmptyWorld, World
+from world import EmptyWorld, BraitenbergWorld
 
 
 class PatternExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
-        self.duration = 500000 #float('inf') # 10000
+        self.TRAINING_STOP_ITERATION = 80000
+        self.duration                = 120000 # 100000
 
-        self.model.training_pattern_length = self.model.TIMESERIES_LENGTH; 
+        self.model.TIMESERIES_LENGTH = 300
+        self.training_pattern_length = 128*2
+
         self.model.world = EmptyWorld(self.model); 
-        self.model.body  = PatternBody(self.model, self.model.training_pattern_length, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,sm_duration=self.model.training_pattern_length)
+        self.model.body  = PatternBody(self.model, self.training_pattern_length, DT=self.model.DT); 
+        self.model.brain = Brain(self.model,input_duration=self.training_pattern_length)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -33,21 +36,19 @@ class PatternExperiment(Experiment):
         self.END             = lambda exp: exp.model.it == exp.duration-1
 
         self.tracker.add_pickle_obj('DT',self.model.DT)
-        self.tracker.add_pickle_obj('TIMESERIES_LENGTH',self.model.TIMESERIES_LENGTH)                                    
-        self.tracker.add_pickle_obj('training_pattern_length',self.model.training_pattern_length)          
+        self.tracker.add_pickle_obj('training_pattern_length',self.training_pattern_length)          
+        self.tracker.add_pickle_obj('TRAINING_STOP_ITERATION',self.TRAINING_STOP_ITERATION)
 
         self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)
-        #self.tracker.track('it','model.it',should_sample=self.EVERY_ITERATION)
+        self.tracker.track('it','model.it',should_sample=self.EVERY_ITERATION)
         self.tracker.track('x','model.body.x',should_sample=self.EVERY_ITERATION)
         self.tracker.track('y','model.body.y',should_sample=self.EVERY_ITERATION)
         self.tracker.track('α','model.body.α',should_sample=self.EVERY_ITERATION)
         self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
         self.tracker.track('sms','model.body.sms',should_sample=self.EVERY_ITERATION)
-        #self.tracker.track('deltas','model.brain.deltas[:,:,0]',should_sample=self.EVERY_ITERATION)
 
     def reset(self) :
         pass
-
 
     def iterate(self) :
         percent_complete(self.model.it,self.duration,title='Pattern Experiment')
@@ -55,7 +56,7 @@ class PatternExperiment(Experiment):
         if self.model.it > self.duration :
             self.end()
         
-        if self.model.it > 10000 :
+        if self.model.it > self.TRAINING_STOP_ITERATION :
             self.model.body.TRAINING_PHASE = False
 
     def end(self) :
@@ -75,28 +76,53 @@ if __name__ == '__main__':
     sms = np.load(path+'sms.npy')
     prediction_error = np.load(path+'prediction_error.npy')
 
+    
     po = pickle.load(open(path+'pickle_objs.pkl','rb'))
     DT = po['DT']
-    TIMESERIES_LENGTH = po['TIMESERIES_LENGTH']
-    period = TIMESERIES_LENGTH
+
+    period = po['training_pattern_length']
+    TRAINING_STOP_ITERATION = po['TRAINING_STOP_ITERATION']
 
     figure(figsize=(6,6))
-    arena_plot(x,y,-5,5,-5,5)
+    #arena_plot(x[0:TRAINING_STOP_ITERATION],y[0:TRAINING_STOP_ITERATION],-5,5,-5,5,color='r')
+    #arena_plot(x[TRAINING_STOP_ITERATION:],y[TRAINING_STOP_ITERATION:],-5,5,-5,5,color='k')
+    α,ω = 0,len(time)
+    
+    for σ in range(α,ω):
+            percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
+            if σ < TRAINING_STOP_ITERATION :
+                color = 'c'
+            else :
+                color = 'k'
+            arena_plot(x[σ:σ+2],y[σ:σ+2],-5,5,-5,5,alpha=0.5,color=color)
+            #arena_plot(x[σ:σ+step],y[σ:σ+step],alpha=0.1,color=color)
+    xlim(-5,5)
+    ylim(-5,5)
+
     tight_layout()
-    savefig(path+'position_full.png')
+    savefig(path+'position_full.png',dpi=300)
     
     #### POSITION BY TIME SLICES PLOT
     figure(figsize=(12,16))
-    R = 8
-    C = 6
+    R = 10
+    C = 8
     N = R*C
     section_length = len(time)//N
+    axs =[]    
     for i in range(N):
-        subplot2grid((R,C),(i//C,i%C))
+        axs.append( subplot2grid((R,C),(i//C,i%C)) )
+    for i in range(N):
+        plt.sca(axs[i])
         α = i*section_length;
         ω = (i+1)*section_length;
-        title(f'$t\\in${time[α]:.1f}$-${time[ω]:.1f}')
-        arena_plot(x[α:ω],y[α:ω],-5,5,-5,5)
+        #title(f'$t\\in${time[α]:.1f}$-${time[ω]:.1f}')
+        if α < TRAINING_STOP_ITERATION :
+            color = 'r'
+        else :
+            color = 'k'
+        arena_plot(x[α:ω],y[α:ω],-5,5,-5,5,color=color)
+        xticks([])
+        yticks([])
 
     tight_layout()        
     savefig(path+'position_time_slices.png',dpi=300)
@@ -115,20 +141,6 @@ if __name__ == '__main__':
     #gca().grid(False)
     tight_layout()        
     savefig(path+'phase.png',dpi=300)
-
-    # #### PREDICTION ERROR PLOT
-    figure(figsize=(8,5))
-    with np.errstate(invalid='ignore'):
-        log_prediction_error = np.log(prediction_error,where=prediction_error!=0)
-
-    fill_between(time,log_prediction_error*0-10,log_prediction_error,step='pre',label='log($\\epsilon$)',facecolor=red,alpha=0.7)
-    plot(time[:-period],running_average(log_prediction_error,period)[:-period],lw=0.7,color='k',label='running average')
-    ylabel('log($\\epsilon$)')
-    xlabel('time')
-    xlim(0,time[-1])
-    ylim(-9,1.8)
-    tight_layout()
-    savefig(path+'prediction_error.png',dpi=300)
 
     def cleanplot() :
         xticks([])
@@ -170,10 +182,14 @@ if __name__ == '__main__':
     cleanplot()
     ticks = arange(0,time[-1],period*DT)
     xticks(ticks)
-    gca().set_xticklabels([f' ' for t in ticks])
-
-
-
+    ticklabels = [f' ' for t in ticks]
+    ticklabels[0] = '0'
+    ticklabels[-1] = f'{time[-1]:.0f}'
+    ticklabels[len(ticklabels)//2] = f'{time[-1]/2:.0f}'
+    ticklabels[len(ticklabels)//4] = f'{time[-1]/4:.0f}'
+    ticklabels[3*len(ticklabels)//4] = f'{3*time[-1]/4:.0f}'
+    gca().set_xticklabels(ticklabels)
+    xlabel('time')
     tight_layout()
     savefig(path+'sms.png',dpi=300)
 

@@ -6,8 +6,7 @@ from pylab import concatenate, np
 
 
 class BraitenbergBody(Body) :
-    def __init__(self, model) :
-
+    def __init__(self, model, DT=0.01) :
         allowed_sensor_values = np.linspace(0,1,3)
         allowed_motor_values = np.linspace(-1.0,1.0,2)
         ls = DiscVal(allowed_sensor_values, 0, name = "LS")
@@ -15,7 +14,7 @@ class BraitenbergBody(Body) :
         lm = DiscVal(allowed_motor_values, 0, name = "LM")
         rm = DiscVal(allowed_motor_values, 0, name = "RM")
 
-        super().__init__(model,DT = 0.01, radius = 0.5, sensor_length=1.0, sensor_βs=[-np.pi/4,np.pi/4], motor_bias=0.,
+        super().__init__(model,DT = DT, radius = 0.5, sensor_length=1.0, sensor_βs=[-np.pi/4,np.pi/4], motor_bias=0.,
                          sensors = [ls,rs], motors = [lm,rm])
 
     def training_phase(self):

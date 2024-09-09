@@ -2,7 +2,7 @@ import numpy as np
 from pylab import *
 from pylab import gca, np, plot, xlim, ylim 
 
-def percent_complete(step, total_steps, bar_width=60, title="", print_perc=True):
+def percent_complete(step, total_steps, bar_width=60, title="", print_perc=True, color='c'):
     import sys
 
     # UTF-8 left blocks: 1, 1/8, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8
@@ -27,8 +27,12 @@ def percent_complete(step, total_steps, bar_width=60, title="", print_perc=True)
         disp = title + ": "         # Optional title to progress display
     
     # Print progress bar in green: https://stackoverflow.com/a/21786287/6929343
-    #disp += "\x1b[0;32m"            # Color Green
-    disp += "\x1b[0;36m"            # Color Cyan
+    if color == 'g':
+        disp += "\x1b[0;32m"            # Color Green
+    elif color == 'c':
+        disp += "\x1b[0;36m"            # Color Cyan
+    elif color == 'y':
+        disp += "\x1b[0;33m"            # Color Yellow
     disp += bar                     # Progress bar to progress display
     disp += "\x1b[0m"               # Color Reset
     if print_perc:
@@ -42,7 +46,7 @@ def percent_complete(step, total_steps, bar_width=60, title="", print_perc=True)
     sys.stdout.flush()
 
 
-def arena_plot(x, y, x_min, x_max, y_min, y_max, sensitivity=0.9):
+def arena_plot(x, y, x_min, x_max, y_min, y_max, sensitivity=0.9, **kwargs):
     """
     #PERIODIC #WRAP #WRAPAROUND #PLOT #PLOTTING #VISUALIZATION
 
@@ -103,7 +107,9 @@ def arena_plot(x, y, x_min, x_max, y_min, y_max, sensitivity=0.9):
     x_new.append(x[-1])
     y_new.append(y[-1])
 
-    plot(x_new, y_new,'k',lw=0.8)
+    if 'color' not in kwargs:
+        kwargs['color'] = 'k'
+    plot(x_new, y_new,lw=0.8,**kwargs)
     xlim(x_min, x_max)
     ylim(y_min, y_max)
     gca().set_aspect('equal')
