@@ -118,3 +118,16 @@ def arena_plot(x, y, x_min, x_max, y_min, y_max, sensitivity=0.9, **kwargs):
 def running_average(data, window_size):
     window = np.ones(int(window_size))/float(window_size)
     return np.convolve(data, window, 'same')
+
+
+def better_colorbar(mappable):
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    import matplotlib.pyplot as plt
+    last_axes = plt.gca()
+    ax = mappable.axes
+    fig = ax.figure
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = fig.colorbar(mappable, cax=cax)
+    plt.sca(last_axes)
+    return cbar

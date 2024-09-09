@@ -17,14 +17,14 @@ class BackAndForthExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
         self.duration = 50000 #float('inf') # 10000
-        self.TRAINING_STOP_ITERATION = 20000
+        self.TRAINING_STOP_ITERATION = 50000 # 20000
 
         ## ## BACK AND FORTH
         #self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self,DT=self.DT); self.brain : Brain = Brain(self,sm_duration=64)
         self.model.TIMESERIES_LENGTH = 128        
         self.model.world = EmptyWorld(self.model); 
         self.model.body = BackAndForthBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,input_duration=48)
+        self.model.brain = Brain(self.model,input_duration=1)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -71,6 +71,9 @@ class BackAndForthExperiment(Experiment):
             self.model.body.TRAINING_PHASE = False
             #self.model.brain.ZERO_LEARNING_RATE = True
             #self.model.brain.learning_rate_exponent = -4
+
+        if self.model.it % 5 == 0 :
+            self.model.brain.image_2d_output()
 
     def end(self) :
         print('Experiment completed.')

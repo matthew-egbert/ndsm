@@ -197,8 +197,8 @@ FloatLayout:
         size_hint: (0.06,0.05)
         background_color: rvit_colors.ORANGE
         function: 'brain.train_on_file("sms_recording.npy")'
-        text: 'InstaTrain'  
-
+        text: 'InstaTrain'
+        
     RVIToggleButton:
         pos_hint: {'x':0.18 ,'y':0.15}
         size_hint: (0.06,0.05)
@@ -206,7 +206,12 @@ FloatLayout:
         boolean: 'recording_sms'
         text: 'REC. SMS Hist.'  
 
-
+    RVIButton:
+        pos_hint: {'x':0.18 ,'y':0.09}
+        background_color: rvit_colors.PINK
+        size_hint: (0.06,0.05)
+        function: 'brain.image_2d_output()'
+        text: 'VIS. OUT.' 
 
     ArrayRenderer: 
         array_data: 'body.sms_familiarity_matrix[:,:]'         # a DataSource

@@ -6,9 +6,11 @@ from discval import DiscVal
 class BackAndForthBody(Body) :
 
     def __init__(self, model, DT = 0.01) :
-        allowed_sensor_values = np.linspace(0,1,6)
-        allowed_motor_values = np.linspace(-0.75,0.75,4)
-        #allowed_motor_values = np.linspace(-1.0,1.0,6)
+        # allowed_sensor_values = np.linspace(0,1,6)
+        # allowed_motor_values = np.linspace(-0.75,0.75,4)
+        allowed_sensor_values = np.linspace(0,1,21)
+        allowed_motor_values = np.linspace(-0.75,0.75,21)
+        
 
         os = DiscVal(allowed_sensor_values, 0, name = "OS")
         om = DiscVal(allowed_motor_values, 0, name = "OM")

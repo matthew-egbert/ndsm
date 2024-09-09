@@ -5,6 +5,25 @@ import torch
 from torch import nn
 from body import Body
 from discval import OneHotter
+from plotting_utils import better_colorbar
+
+# params = {
+#     'image.origin': 'lower',
+#     'image.interpolation': 'nearest',
+#     'image.cmap': 'gray',
+#     'axes.grid': False,
+#     'savefig.dpi': 150,  # to adjust notebook inline plot size
+#     'axes.labelsize': 8, # fontsize for x and y labels (was 10)
+#     'axes.titlesize': 8,
+#     'font.size': 8, # was 10
+#     'legend.fontsize': 6, # was 10
+#     'xtick.labelsize': 8,
+#     'ytick.labelsize': 8,
+#     'text.usetex': True,
+#     'figure.figsize': [3.39, 2.10],
+#     'font.family': 'serif',
+# }
+# matplotlib.rcParams.update(params)
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -227,6 +246,76 @@ class Brain(object) :
     def prepare_to_iterate(self) :
         self.learn()
         self.act()
+
+    def image_2d_output(self) :
+        self.n_model.eval()
+        action_input_cols, _ = self.get_input_output_columns(τ=self.model.it)
+        
+        ## this is the base input to the NN
+        base_input = self.body.sms_h[:,action_input_cols]
+        ## we modify the last col systematically, to show what the influence
+        ## of the last state is upon the output of the NN
+
+        def sample_output(x) :
+            base_input[0,-1] = x[1]
+            base_input[1,-1] = x[0]
+            nn_input = torch.tensor(base_input.flatten(),dtype=torch.float32).to(self.device)
+            model_out = self.n_model(nn_input)
+            ps = nn.Softmax(dim=0)(model_out)
+            ps = ps.cpu().detach().numpy()
+
+            # DETERMINISTIC_NN_OUTPUT
+            output_state_index = argmax(ps)                
+            output_onehot = np.zeros(len(ps))
+            output_onehot[output_state_index] = 1
+
+            self.body.onehotter.onehot = output_onehot
+            output_values = self.body.onehotter.values        
+            #output_indices = self.body.onehotter.indices
+
+            return output_values[1],output_values[0]
+
+        mesh = np.meshgrid(self.body.motors[0].allowed_values,self.body.sensors[0].allowed_values)
+        outputs = np.apply_along_axis(sample_output,0,mesh)
+
+        ## plot a vector field
+        figure(figsize=(14,5.5))
+        m = outputs[0]
+        s = outputs[1]
+
+        pxlw = (0.75 - -0.75)/np.shape(m)[1]/2
+        pxlh = (1.0 - 0.0)/np.shape(m)[0]/2
+        extnts = (-0.75-pxlw,0.75+pxlw,0-pxlh,1+pxlh)
+        subplot2grid((1,2),(0,0))
+        img = imshow(m,origin='lower',extent=extnts,vmin=-0.75,vmax=0.75,cmap='RdGy')
+        #better_colorbar(img)
+        #quiver(mesh[0],mesh[1],outputs[0]-mesh[0],outputs[1]-mesh[1], pivot='mid')
+        for i in range(np.shape(m)[0]):
+            for j in range(np.shape(m)[1]):
+                plot([mesh[0][i][j], outputs[0][i][j]], 
+                     [mesh[1][i][j], outputs[1][i][j]], color='blue', alpha=0.3, lw=0.5)
+        xlim(extnts[0],extnts[1])
+        ylim(extnts[2],extnts[3])
+        xlabel('motor output')
+
+        subplot2grid((1,2),(0,1))
+        img = imshow(s,origin='lower',extent=extnts,vmin=0.0,vmax=1.0,cmap='Purples_r')
+        #better_colorbar(img)
+        #quiver(mesh[0],mesh[1],outputs[0]-mesh[0],outputs[1]-mesh[1], pivot='mid')
+        for i in range(np.shape(m)[0]):
+            for j in range(np.shape(m)[1]):
+                plot([mesh[0][i][j], outputs[0][i][j]], 
+                     [mesh[1][i][j], outputs[1][i][j]], color='black', alpha=0.3, lw=0.5)
+        xlim(extnts[0],extnts[1])
+        ylim(extnts[2],extnts[3])
+        xlabel('sensor output')
+        
+        #suptitle(f't = {self.model.it*self.model.DT}')
+        tight_layout()
+        savefig(f'nn_output_field/{self.model.it:06}.png')
+        close()
+        #quit()
+
 
     def iterate(self) :
         pass
