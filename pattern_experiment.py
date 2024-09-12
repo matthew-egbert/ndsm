@@ -14,15 +14,16 @@ from world import EmptyWorld, BraitenbergWorld
 class PatternExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
-        self.TRAINING_STOP_ITERATION = 80000
-        self.duration                = 120000 # 100000
+        self.TRAINING_STOP_ITERATION =  51200 / 2
+        self.duration                = 102400 / 2 # 100000
 
         self.model.TIMESERIES_LENGTH = 300
-        self.training_pattern_length = 128*2
+        self.training_pattern_length = 64#256
 
         self.model.world = EmptyWorld(self.model); 
         self.model.body  = PatternBody(self.model, self.training_pattern_length, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,input_duration=self.training_pattern_length)
+        self.model.brain = Brain(self.model,Ω=self.training_pattern_length)
+
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -51,7 +52,13 @@ class PatternExperiment(Experiment):
         pass
 
     def iterate(self) :
-        percent_complete(self.model.it,self.duration,title='Pattern Experiment')
+        color = 'c'
+        if self.model.body.TRAINING_PHASE :
+            color = 'r'
+        pe = self.model.brain.prediction_error
+        if pe != 0 :
+            pe = log(pe)
+        percent_complete(self.model.it,self.duration,title=f'Pattern Exp. error exponent={pe:.3f}',color=color)
         self.tracker.iterate(self)
         if self.model.it > self.duration :
             self.end()
@@ -83,24 +90,24 @@ if __name__ == '__main__':
     period = po['training_pattern_length']
     TRAINING_STOP_ITERATION = po['TRAINING_STOP_ITERATION']
 
-    figure(figsize=(6,6))
-    #arena_plot(x[0:TRAINING_STOP_ITERATION],y[0:TRAINING_STOP_ITERATION],-5,5,-5,5,color='r')
-    #arena_plot(x[TRAINING_STOP_ITERATION:],y[TRAINING_STOP_ITERATION:],-5,5,-5,5,color='k')
-    α,ω = 0,len(time)
+    # figure(figsize=(6,6))
+    # #arena_plot(x[0:TRAINING_STOP_ITERATION],y[0:TRAINING_STOP_ITERATION],-5,5,-5,5,color='r')
+    # #arena_plot(x[TRAINING_STOP_ITERATION:],y[TRAINING_STOP_ITERATION:],-5,5,-5,5,color='k')
+    # α,ω = 0,len(time)
     
-    for σ in range(α,ω):
-            percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
-            if σ < TRAINING_STOP_ITERATION :
-                color = 'c'
-            else :
-                color = 'k'
-            arena_plot(x[σ:σ+2],y[σ:σ+2],-5,5,-5,5,alpha=0.5,color=color)
-            #arena_plot(x[σ:σ+step],y[σ:σ+step],alpha=0.1,color=color)
-    xlim(-5,5)
-    ylim(-5,5)
+    # for σ in range(α,ω):
+    #         percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
+    #         if σ < TRAINING_STOP_ITERATION :
+    #             color = 'c'
+    #         else :
+    #             color = 'k'
+    #         arena_plot(x[σ:σ+2],y[σ:σ+2],-5,5,-5,5,alpha=0.5,color=color)
+    #         #arena_plot(x[σ:σ+step],y[σ:σ+step],alpha=0.1,color=color)
+    # xlim(-5,5)
+    # ylim(-5,5)
 
-    tight_layout()
-    savefig(path+'position_full.png',dpi=300)
+    # tight_layout()
+    # savefig(path+'position_full.png',dpi=300)
     
     #### POSITION BY TIME SLICES PLOT
     figure(figsize=(12,16))
@@ -127,20 +134,20 @@ if __name__ == '__main__':
     tight_layout()        
     savefig(path+'position_time_slices.png',dpi=300)
 
-    #### PHASE PLOT
-    figure(figsize=(8,8))
-    theta = time%(period*DT) / (period*DT) * 2*np.pi        
-    r = sms[:,0] * time
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    plot(theta, r,'.',ms=1,label='sensor')
-    title('$r=t; θ=sensor$')
-    #ax.set_rmax(2)
-    gca().set_rticks([])  # Less radial ticks
-    gca().set_rlabel_position(-2.5)  # Move radial labels away from plotted line
-    #legend()
-    #gca().grid(False)
-    tight_layout()        
-    savefig(path+'phase.png',dpi=300)
+    # #### PHASE PLOT
+    # figure(figsize=(8,8))
+    # theta = time%(period*DT) / (period*DT) * 2*np.pi        
+    # r = sms[:,0] * time
+    # fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    # plot(theta, r,'.',ms=1,label='sensor')
+    # title('$r=t; θ=sensor$')
+    # #ax.set_rmax(2)
+    # gca().set_rticks([])  # Less radial ticks
+    # gca().set_rlabel_position(-2.5)  # Move radial labels away from plotted line
+    # #legend()
+    # #gca().grid(False)
+    # tight_layout()        
+    # savefig(path+'phase.png',dpi=300)
 
     def cleanplot() :
         xticks([])
@@ -150,34 +157,35 @@ if __name__ == '__main__':
     #### SMS PLOT
     figure(figsize=(8,5))
     
-    r,c = 5,1
-    subplot2grid((r,c),(0,0))
-    fill_between(time,0*sms[:,0],sms[:,0],label='sensor',step='pre',facecolor='y')
-    plot(time[:-period],running_average(sms[:,0],period)[:-period],lw=0.7,color='k',label='running average')
-    cleanplot()
-    ylabel('sensor')
-    ticks = arange(0,time[-1],period*DT)
-    xticks(ticks)
-    gca().set_xticklabels([f' ' for t in ticks])
-    gca().xaxis.set_ticks_position('top')
-    
-    subplot2grid((r,c),(1,0))
-    fill_between(time,0*sms[:,0]-1,sms[:,1],label='lm',step='pre')
-    plot(time[:-period],running_average(sms[:,1],period)[:-period],lw=0.7,color='k',label='running average')
+    r,c = 4,1
+    subplot2grid((r,c),(0,0))   
+    fill_between(time,0*sms[:,0]-1,sms[:,-2],label='lm',step='pre')
+    plot(time[:-period],running_average(sms[:,-2],period)[:-period],lw=0.7,color='k',label='running average')
     cleanplot()
     ylabel('LM')
     
-    subplot2grid((r,c),(2,0))
-    fill_between(time,0*sms[:,0]-1,sms[:,2],label='rm',step='pre',facecolor='g')
-    plot(time[:-period],running_average(sms[:,2],period)[:-period],lw=0.7,color='k',label='running average')
+    subplot2grid((r,c),(1,0))   
+    fill_between(time,0*sms[:,0]-1,sms[:,-1],label='rm',step='pre',facecolor='g')
+    plot(time[:-period],running_average(sms[:,-1],period)[:-period],lw=0.7,color='k',label='running average')
     cleanplot()
     ylabel('RM')
-    
-    subplot2grid((r,c),(3,0),rowspan=2)
+
+    # subplot2grid((r,c),(2,0))
+    # fill_between(time,0*sms[:,0],sms[:,0],label='sensor',step='pre',facecolor='y')
+    # plot(time[:-period],running_average(sms[:,0],period)[:-period],lw=0.7,color='k',label='running average')
+    # cleanplot()
+    # ylabel('sensor')
+    # ticks = arange(0,time[-1],period*DT)
+    # xticks(ticks)
+    # gca().set_xticklabels([f' ' for t in ticks])
+    # gca().xaxis.set_ticks_position('top')
+
+
+    subplot2grid((r,c),(2,0),rowspan=2)
     log_prediction_error = np.log(prediction_error,where=prediction_error!=0)
     fill_between(time,log_prediction_error*0-10,log_prediction_error,step='pre',label='log($\\epsilon$)',facecolor=red,alpha=0.7)
     plot(time[:-period],running_average(log_prediction_error,period)[:-period],lw=0.7,color='k',label='running average')
-    ylim(-9,1.8)
+    ylim(-12,1.8)
     ylabel('log($\\epsilon$)')
     cleanplot()
     ticks = arange(0,time[-1],period*DT)

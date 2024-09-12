@@ -16,15 +16,15 @@ from world import EmptyWorld, BraitenbergWorld
 class BackAndForthExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
-        self.duration = 50000 #float('inf') # 10000
-        self.TRAINING_STOP_ITERATION = 50000 # 20000
+        self.duration = 8*50000 #float('inf') # 10000
+        self.TRAINING_STOP_ITERATION = self.duration#50000 # 20000
 
         ## ## BACK AND FORTH
         #self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self,DT=self.DT); self.brain : Brain = Brain(self,sm_duration=64)
         self.model.TIMESERIES_LENGTH = 128        
         self.model.world = EmptyWorld(self.model); 
         self.model.body = BackAndForthBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,input_duration=1)
+        self.model.brain = Brain(self.model,Ω=128)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -39,7 +39,7 @@ class BackAndForthExperiment(Experiment):
 
         self.tracker.add_pickle_obj('DT',self.model.DT)
         self.tracker.add_pickle_obj('TIMESERIES_LENGTH',self.model.TIMESERIES_LENGTH)                                    
-        self.tracker.add_pickle_obj('input_duration',self.model.brain.input_duration)        
+        self.tracker.add_pickle_obj('Ω',self.model.brain.Ω)        
         self.tracker.add_pickle_obj('TRAINING_STOP_ITERATION',self.TRAINING_STOP_ITERATION)
 
         self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)
@@ -72,7 +72,7 @@ class BackAndForthExperiment(Experiment):
             #self.model.brain.ZERO_LEARNING_RATE = True
             #self.model.brain.learning_rate_exponent = -4
 
-        if self.model.it % 5 == 0 :
+        if self.model.it % 1000 == 0 :
             self.model.brain.image_2d_output()
 
     def end(self) :
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     po = pickle.load(open(path+'pickle_objs.pkl','rb'))
     DT = po['DT']
-    period = po['input_duration']
+    period = po['Ω']
     TRAINING_STOP_ITERATION = po['TRAINING_STOP_ITERATION']
 
     # #### POSITION PLOT

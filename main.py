@@ -10,7 +10,7 @@ from pattern_experiment import PatternExperiment
 
 if platform == 'linux':
     ratio = 2.0
-    w = 1920/2
+    w = 1920
     Config.set('graphics', 'width', str(int(w)))
     Config.set('graphics', 'height', str(int(w / 2)))
     Config.set('graphics', 'fullscreen', 'false')
@@ -52,10 +52,6 @@ class Model():
         self.recording_sms = False
         self.sms_recording_history = None
 
-        # if experiment_class == None :
-        #     ## ## BRAITENBERG
-        #     self.world : BraitenbergWorld = BraitenbergWorld(self); self.body : Body = BraitenbergBody(self, DT=self.DT); self.brain : Brain = Brain(self,input_duration=32)
-        # else :
         self.experiment = experiment_class(self)
                     
         self.init_env_drawables()
@@ -92,16 +88,16 @@ class Model():
         
     def iterate(self):
         if not self.paused:
-            if not self.headless :
-                if self.it % 1 == 0 :
-                    print(f'##### it: {self.it} ')            
+            # if not self.headless :
+            #     if self.it % 1 == 0 :
+            #         print(f'##### it: {self.it} ')            
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
 
             self.brain.iterate()
             self.body.iterate()
-            if self.headless :
-                self.experiment.iterate()
+            
+            self.experiment.iterate()
             
             if self.recording_sms:
                 if self.sms_recording_history is None :

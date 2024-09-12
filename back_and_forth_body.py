@@ -8,8 +8,8 @@ class BackAndForthBody(Body) :
     def __init__(self, model, DT = 0.01) :
         # allowed_sensor_values = np.linspace(0,1,6)
         # allowed_motor_values = np.linspace(-0.75,0.75,4)
-        allowed_sensor_values = np.linspace(0,1,21)
-        allowed_motor_values = np.linspace(-0.75,0.75,21)
+        allowed_sensor_values = np.linspace(0,1,51)
+        allowed_motor_values = np.linspace(-0.75,0.75,51)
         
 
         os = DiscVal(allowed_sensor_values, 0, name = "OS")

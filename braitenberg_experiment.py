@@ -22,7 +22,7 @@ class BraitenbergExperiment(Experiment):
 
         self.model.world = BraitenbergWorld(self.model)
         self.model.body  = BraitenbergBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,input_duration=16)
+        self.model.brain = Brain(self.model,Ω=1)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -36,7 +36,7 @@ class BraitenbergExperiment(Experiment):
         self.END             = lambda exp: exp.model.it == exp.duration-1
 
         self.tracker.add_pickle_obj('DT',self.model.DT)
-        self.tracker.add_pickle_obj('input_duration',self.model.brain.input_duration)          
+        self.tracker.add_pickle_obj('Ω',self.model.brain.Ω)          
         self.tracker.add_pickle_obj('TRAINING_STOP_ITERATION',self.TRAINING_STOP_ITERATION)
 
         self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     po = pickle.load(open(path+'pickle_objs.pkl','rb'))
     DT = po['DT']
 
-    period = po['input_duration']
+    period = po['Ω']
     TRAINING_STOP_ITERATION = po['TRAINING_STOP_ITERATION']
 
     figure(figsize=(6,6))

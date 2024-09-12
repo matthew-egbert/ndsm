@@ -38,8 +38,8 @@ class Body(object) :
         self.x_h = np.zeros(self.model.TIMESERIES_LENGTH)
         self.y_h = np.zeros(self.model.TIMESERIES_LENGTH)
         self.drawable_sensor_lines = np.zeros((len(self.sensors)*2,2))
-        self.sms_familiarity_matrix = np.zeros((self.sensors[0].allowed_values.shape[0], 
-                                                self.motors[0].allowed_values.shape[0]))
+        # self.sms_familiarity_matrix = np.zeros((self.sensors[0].allowed_values.shape[0], 
+        #                                         self.motors[0].allowed_values.shape[0]))
         self.update_sensors()
 
                 

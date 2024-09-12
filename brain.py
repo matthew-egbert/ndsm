@@ -6,24 +6,7 @@ from torch import nn
 from body import Body
 from discval import OneHotter
 from plotting_utils import better_colorbar
-
-# params = {
-#     'image.origin': 'lower',
-#     'image.interpolation': 'nearest',
-#     'image.cmap': 'gray',
-#     'axes.grid': False,
-#     'savefig.dpi': 150,  # to adjust notebook inline plot size
-#     'axes.labelsize': 8, # fontsize for x and y labels (was 10)
-#     'axes.titlesize': 8,
-#     'font.size': 8, # was 10
-#     'legend.fontsize': 6, # was 10
-#     'xtick.labelsize': 8,
-#     'ytick.labelsize': 8,
-#     'text.usetex': True,
-#     'figure.figsize': [3.39, 2.10],
-#     'font.family': 'serif',
-# }
-# matplotlib.rcParams.update(params)
+from utils import create_log_file
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -48,16 +31,16 @@ class NeuralNetwork(nn.Module):
         return logits
 
 class NDSMDataSet(torch.utils.data.Dataset):
-    def __init__(self, sms_h : np.ndarray, onehotter : OneHotter, input_duration : int) :        
+    def __init__(self, sms_h : np.ndarray, onehotter : OneHotter, Ω : int) :        
         self.data = sms_h        
-        self.input_duration = input_duration
+        self.Ω = Ω
         self.onehotter = onehotter
 
     def __len__(self) :
         return np.shape(self.data)[1]
 
     def __getitem__(self, idx) :
-        input_cols = arange(idx-self.input_duration,idx) % np.shape(self.data)[1]
+        input_cols = arange(idx-self.Ω,idx) % np.shape(self.data)[1]
         output_col = (idx) % np.shape(self.data)[1]
         
         output_sms = self.onehotter.values = self.data[:,output_col]
@@ -66,13 +49,14 @@ class NDSMDataSet(torch.utils.data.Dataset):
         return self.data[:,input_cols].flatten(), output_onehot
 
 class Brain(object) :
-    def __init__(self, model, input_duration=100, *args, **kwargs) :
+    def __init__(self, model, Ω=100, *args, **kwargs) :
         """
-        Brain object for the model. The sm_duration parameter specifies the
+        Brain object for the model. The parameter Ω specifies the
         number of time steps of sm history the brain considers.
+
         """
         self.model = model
-        self.input_duration = input_duration
+        self.Ω = Ω ## the 'span' of the NDSM. It is the number of time steps of history that are used as input
         self.body : Body = self.model.body
         self.learning_rate_exponent = -3
         self.DETERMINISTIC_NN_OUTPUT = False
@@ -80,12 +64,12 @@ class Brain(object) :
 
         self.N_SENSORS = len(self.body.sensors)
         self.N_MOTORS  = len(self.body.motors)
-        nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.input_duration
+        nn_input_size = (self.N_SENSORS + self.N_MOTORS) * self.Ω
         nn_output_size = len(self.body.onehotter.onehot)
         nn_hidden_size = nn_input_size * 2 // 3 + nn_output_size
 
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
-        print(my_nn)
+        
 
         self.device = "cuda" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
@@ -95,11 +79,22 @@ class Brain(object) :
         self.prediction_errors = np.zeros(self.model.TIMESERIES_LENGTH)
         self.prediction_h = np.zeros((self.N_SENSORS+self.N_MOTORS, self.model.TIMESERIES_LENGTH))
 
-        self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.input_duration))
+        self.recent_sms_h = np.zeros((self.N_SENSORS+self.N_MOTORS,self.Ω))
         self.debug_indices = np.zeros_like(self.body.sms_h)
         self.output_probabilities = np.zeros(nn_output_size)
         self.output_probabilities_h = np.zeros((nn_output_size,self.model.TIMESERIES_LENGTH))
         self.most_recent_output = np.zeros(nn_output_size)
+
+        self.span_log = self.create_log_file('span')
+        self.input_log = self.create_log_file('input')
+        self.output_log = self.create_log_file('output')
+
+        nn_log = self.create_log_file('nn_properties')
+        nn_log.write(my_nn)
+        nn_log.write(f'self.N_SENSORS: {self.N_SENSORS}')
+        nn_log.write(f'self.N_MOTORS: {self.N_MOTORS}')
+        nn_log.write(f'self.Ω: {self.Ω}')
+        nn_log.close()
 
     def get_input_output_columns(self, τ : int=0, mod=None) :
         """
@@ -117,7 +112,7 @@ class Brain(object) :
         if mod is None :
             mod = np.shape(self.body.sms_h)[1]
 
-        input_cols = arange(τ-self.input_duration,τ) % mod
+        input_cols = arange(τ-self.Ω,τ) % mod
         output_col = (τ) % mod
 
         return input_cols, output_col
@@ -155,7 +150,7 @@ class Brain(object) :
 
         print(f'Loading training data from {filename}')
         print(f'size: {np.load(filename).shape}')
-        training_data = NDSMDataSet(np.load(filename).T,self.body.onehotter,input_duration=self.input_duration)
+        training_data = NDSMDataSet(np.load(filename).T,self.body.onehotter,Ω=self.Ω)
         training_data_loader = torch.utils.data.DataLoader(training_data,batch_size=2,shuffle=False,pin_memory=True) ## setting shuffle to True may be dissimilar to usual training
 
         running_loss = 0
@@ -215,16 +210,33 @@ class Brain(object) :
         nn_input = torch.tensor(action_input.flatten(),dtype=torch.float32).to(self.device)
         model_out = self.n_model(nn_input)
         ps = nn.Softmax(dim=0)(model_out)
-        ps = ps.cpu().detach().numpy()
+        ps = ps.cpu().detach().numpy()        
         self.output_probabilities = ps
 
         if self.DETERMINISTIC_NN_OUTPUT :
             output_state_index = argmax(ps)
         else :
             output_state_index = np.random.choice(range(len(ps)), p=ps)
+            if output_state_index != argmax(ps) :
+                print(' it =',self.model.it)
+                print("\nMADE UNLIKELY SELECTION: p = ", ps[output_state_index])
+                print(f'Σ ps: {sum(ps)} {list(range(len(ps)))} {ps}; selected {output_state_index} with p = {ps[output_state_index]}')
+
 
         output_onehot = np.zeros(len(ps))
         output_onehot[output_state_index] = 1
+        TRAINING = 'NT'
+        if self.model.body.TRAINING_PHASE :
+            TRAINING = ' T'
+        self.span_log.write(f'{TRAINING}it:{self.model.it} \t {str(action_input_cols).replace("\n","")}\n')
+        self.input_log.write(f'{TRAINING}it:{self.model.it} \t {str(action_input).replace("\n","").replace("-1.","X").replace("1.","O").replace(" ","")}\n')
+        end = '\n'
+        if output_state_index != argmax(ps) :
+            end = ' NOT MOST PROBABLE OUTPUT \n'
+        #outprob = [f'{ps[_]:.3f}' for _ in range(len(ps))]
+        outprob = [f'{log10(ps[_]):1.3f}' for _ in range(len(ps))]
+        self.output_log.write(f'{TRAINING}it:{self.model.it} \t {str(outprob).replace("\n","")} \t --> SELECT {output_state_index} :: LOSS: {log10(self.prediction_error):.3f} {end} ')
+
 
         self.body.onehotter.onehot = output_onehot
         output_values = self.body.onehotter.values        
@@ -238,7 +250,7 @@ class Brain(object) :
         self.prediction_errors[self.model.it%self.model.TIMESERIES_LENGTH] = self.prediction_error
         self.prediction_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = output_values
 
-        x = np.log(self.output_probabilities,where=self.output_probabilities>0)
+        x = np.log10(self.output_probabilities,where=self.output_probabilities>0)
         x -= min(x)
         x /= max(x)
         self.output_probabilities_h[:,self.model.it%self.model.TIMESERIES_LENGTH] = x
@@ -247,7 +259,7 @@ class Brain(object) :
         self.learn()
         self.act()
 
-    def image_2d_output(self) :
+    def image_2d_output(self) :        
         self.n_model.eval()
         action_input_cols, _ = self.get_input_output_columns(τ=self.model.it)
         

@@ -33,6 +33,8 @@ def percent_complete(step, total_steps, bar_width=60, title="", print_perc=True,
         disp += "\x1b[0;36m"            # Color Cyan
     elif color == 'y':
         disp += "\x1b[0;33m"            # Color Yellow
+    elif color == 'r':
+        disp += "\x1b[0;31m"            # Color Red
     disp += bar                     # Progress bar to progress display
     disp += "\x1b[0m"               # Color Reset
     if print_perc:

@@ -13,7 +13,7 @@ class PatternBody(Body) :
         rm = DiscVal(allowed_motor_values, 0, name = "RM")
 
         super().__init__(model, radius = 0.5, sensor_length=1.0, sensor_βs=[0], 
-                         sensors = [os], motors = [lm,rm], **kwargs)
+                         sensors = [], motors = [lm,rm], **kwargs)
         
         self.pattern_length = pattern_length
         z = 0.0
@@ -26,14 +26,14 @@ class PatternBody(Body) :
         self.moves = [(f,f),(f,f),(f,f),(b,b),(b,f),(f,b)]
         #self.pattern = [self.moves[np.random.randint(len(self.moves))] for idx in range(pattern_length)]
         self.pattern = []
-        for idx in range(4) :
+        for idx in range(2) :
             self.pattern.extend([F,F,F,F,F,R,R,R,R,R,F,F,F,F,L,L])
-        for idx in range(4) :
+        for idx in range(2) :
             self.pattern.extend([R,B,R,B,R,B,R,B,R,B,F,F,F,F,L,L])
-        for idx in range(4) :
-            self.pattern.extend([F,R,F,R,F,R,F,R,F,R,F,R,F,R,F,R])
-        for idx in range(4) :
-            self.pattern.extend([F,L,L,F,L,L,F,L,L,F,L,L,F,L,L,F])
+        # for idx in range(4) :
+        #     self.pattern.extend([F,R,F,R,F,R,F,R,F,R,F,R,F,R,F,R])
+        # for idx in range(4) :
+        #     self.pattern.extend([F,L,L,F,L,L,F,L,L,F,L,L,F,L,L,F])
         # print(len(self.pattern))
         # quit()
 
@@ -44,7 +44,8 @@ class PatternBody(Body) :
         #     self.sensors[0].value = np.random.choice([0.0,1.0])
         # else :
         #     self.sensors[0].value = 0.0
-        self.sensors[0].value = 0.0
+        if len(self.sensors) > 0 :
+            self.sensors[0].value = 0.0
 
     def training_phase(self):
         motors = self.pattern[self.model.it % self.pattern_length]
