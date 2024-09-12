@@ -75,6 +75,16 @@
             "request": "launch",
             "program": "braitenberg_experiment.py",
             "console": "integratedTerminal"
-        }
+        },
+
+
+        {
+            "name": "CPROFILE",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "python -m cProfile main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--headless", "--experiment", "pattern"]
+        },
     ]
 }

@@ -8,6 +8,8 @@ from discval import OneHotter
 from plotting_utils import better_colorbar
 from utils import create_log_file
 
+import line_profiler
+
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         """
@@ -49,14 +51,17 @@ class NDSMDataSet(torch.utils.data.Dataset):
         return self.data[:,input_cols].flatten(), output_onehot
 
 class Brain(object) :
-    def __init__(self, model, Ω=100, *args, **kwargs) :
+    def __init__(self, model, Ω=100, β=64, *args, **kwargs) :
         """
-        Brain object for the model. The parameter Ω specifies the
-        number of time steps of sm history the brain considers.
+        Brain object for the model. The parameter 
+        
+        Ω : the 'span' i.e., the duration (# time steps) of sm history used as input to the NN
+        β : the batch size, i.e., the number of training pairs used each time the network is trained
 
         """
         self.model = model
-        self.Ω = Ω ## the 'span' of the NDSM. It is the number of time steps of history that are used as input
+        self.Ω = Ω 
+        self.β = β
         self.body : Body = self.model.body
         self.learning_rate_exponent = -3
         self.DETERMINISTIC_NN_OUTPUT = False
@@ -74,7 +79,7 @@ class Brain(object) :
         self.device = "cuda" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
         self.learning_rate = exp(self.learning_rate_exponent)
-        self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.0)
+        self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.9)
         self.prediction_error = 0.0
         self.prediction_errors = np.zeros(self.model.TIMESERIES_LENGTH)
         self.prediction_h = np.zeros((self.N_SENSORS+self.N_MOTORS, self.model.TIMESERIES_LENGTH))
@@ -85,15 +90,20 @@ class Brain(object) :
         self.output_probabilities_h = np.zeros((nn_output_size,self.model.TIMESERIES_LENGTH))
         self.most_recent_output = np.zeros(nn_output_size)
 
-        self.span_log = self.create_log_file('span')
-        self.input_log = self.create_log_file('input')
-        self.output_log = self.create_log_file('output')
+        self.span_log = create_log_file('span')
+        self.input_log = create_log_file('input')
+        self.output_log = create_log_file('output')
+        self.not_first_choice_log = create_log_file('not_first_choice_events')
 
-        nn_log = self.create_log_file('nn_properties')
-        nn_log.write(my_nn)
+        self.training_input_matrix = np.zeros((self.β,nn_input_size))
+        self.training_output_matrix = np.zeros((self.β,nn_output_size))
+
+        nn_log = create_log_file('nn_properties')
+        nn_log.write(str(my_nn))
         nn_log.write(f'self.N_SENSORS: {self.N_SENSORS}')
         nn_log.write(f'self.N_MOTORS: {self.N_MOTORS}')
         nn_log.write(f'self.Ω: {self.Ω}')
+        nn_log.write(f'self.β: {self.β}')
         nn_log.close()
 
     def get_input_output_columns(self, τ : int=0, mod=None) :
@@ -116,6 +126,7 @@ class Brain(object) :
         output_col = (τ) % mod
 
         return input_cols, output_col
+
 
     def get_learning_pair(self, τ : int=1, sms_array = None) :
         """ 
@@ -174,7 +185,12 @@ class Brain(object) :
 
         #self.prediction_error = loss.item
 
+    @line_profiler.profile
     def learn(self) :
+        if self.model.it == self.model.experiment.TRAINING_STOP_ITERATION :
+            print('CHANGING OPTIMIZER!!!')
+            self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.0)
+
         self.n_model.train()
         self.optimizer.zero_grad()
         self.learning_rate = 10.0**(self.learning_rate_exponent) * (not self.ZERO_LEARNING_RATE)
@@ -183,24 +199,35 @@ class Brain(object) :
 
         loss_fn = nn.CrossEntropyLoss()
 
-        inputs = []
-        outputs = []
-        for τ in [1]: #range(1,64) :
-            i,o = self.get_learning_pair(τ=self.model.it-τ)
-            inputs.append(i)
-            outputs.append(o)
-        
-        nn_input = torch.tensor(inputs,dtype=torch.float32).to(self.device)
-        correct_nn_output = torch.tensor(outputs,dtype=torch.float32).to(self.device)
+        # inputs = []
+        # outputs = []
+        # for τ in range(1,1+self.β): 
+        #     i,o = self.get_learning_pair(τ=self.model.it-τ)
+        #     inputs.append(i)
+        #     outputs.append(o)
+        # inputs = np.array(inputs)
+        # outputs = np.array(outputs)
 
-        model_out = self.n_model(nn_input)
-        loss = loss_fn(model_out,correct_nn_output)
+        # nn_input = torch.tensor(inputs,dtype=torch.float32).to(self.device)
+        # correct_nn_output = torch.tensor(outputs,dtype=torch.float32).to(self.device)
 
-        # Backpropagation
-        loss.backward()
-        self.optimizer.step()
+        r = self.model.it % self.β
+        i,o = self.get_learning_pair(τ=self.model.it-1)
+        self.training_input_matrix[r,:] = i
+        self.training_output_matrix[r,:] = o
 
-        self.prediction_error = loss.item()
+        if self.model.it > self.β :
+            nn_input = torch.tensor(self.training_input_matrix,dtype=torch.float32).to(self.device)
+            correct_nn_output = torch.tensor(self.training_output_matrix,dtype=torch.float32).to(self.device)
+
+            model_out = self.n_model(nn_input)
+            loss = loss_fn(model_out,correct_nn_output)
+
+            # Backpropagation
+            loss.backward()
+            self.optimizer.step()
+
+            self.prediction_error = loss.item()
 
     def act(self) :
         self.n_model.eval()
@@ -217,26 +244,22 @@ class Brain(object) :
             output_state_index = argmax(ps)
         else :
             output_state_index = np.random.choice(range(len(ps)), p=ps)
-            if output_state_index != argmax(ps) :
-                print(' it =',self.model.it)
-                print("\nMADE UNLIKELY SELECTION: p = ", ps[output_state_index])
-                print(f'Σ ps: {sum(ps)} {list(range(len(ps)))} {ps}; selected {output_state_index} with p = {ps[output_state_index]}')
-
+            # if output_state_index != argmax(ps) :
+            #     self.not_first_choice_log.write(f'it={self.model.it}\t {ps}; selected {output_state_index} with p = {ps[output_state_index]}\n')
 
         output_onehot = np.zeros(len(ps))
         output_onehot[output_state_index] = 1
         TRAINING = 'NT'
         if self.model.body.TRAINING_PHASE :
             TRAINING = ' T'
-        self.span_log.write(f'{TRAINING}it:{self.model.it} \t {str(action_input_cols).replace("\n","")}\n')
-        self.input_log.write(f'{TRAINING}it:{self.model.it} \t {str(action_input).replace("\n","").replace("-1.","X").replace("1.","O").replace(" ","")}\n')
+        # self.span_log.write(f'{TRAINING}it:{self.model.it} \t {str(action_input_cols).replace("\n","")}\n')
+        # self.input_log.write(f'{TRAINING}it:{self.model.it} \t {str(action_input).replace("\n","").replace("-1.","X").replace("1.","O").replace(" ","")}\n')
         end = '\n'
         if output_state_index != argmax(ps) :
             end = ' NOT MOST PROBABLE OUTPUT \n'
         #outprob = [f'{ps[_]:.3f}' for _ in range(len(ps))]
         outprob = [f'{log10(ps[_]):1.3f}' for _ in range(len(ps))]
-        self.output_log.write(f'{TRAINING}it:{self.model.it} \t {str(outprob).replace("\n","")} \t --> SELECT {output_state_index} :: LOSS: {log10(self.prediction_error):.3f} {end} ')
-
+        # self.output_log.write(f'{TRAINING}it:{self.model.it} \t {str(outprob).replace("\n","")} \t --> SELECT {output_state_index} :: LOSS: {log10(self.prediction_error):.3f} {end} ')
 
         self.body.onehotter.onehot = output_onehot
         output_values = self.body.onehotter.values        
@@ -257,6 +280,7 @@ class Brain(object) :
 
     def prepare_to_iterate(self) :
         self.learn()
+        
         self.act()
 
     def image_2d_output(self) :        

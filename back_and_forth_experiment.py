@@ -16,15 +16,15 @@ from world import EmptyWorld, BraitenbergWorld
 class BackAndForthExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
-        self.duration = 8*50000 #float('inf') # 10000
-        self.TRAINING_STOP_ITERATION = self.duration#50000 # 20000
+        self.duration = 51200 #float('inf') # 10000
+        self.TRAINING_STOP_ITERATION = 25600
 
         ## ## BACK AND FORTH
         #self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self,DT=self.DT); self.brain : Brain = Brain(self,sm_duration=64)
-        self.model.TIMESERIES_LENGTH = 128        
+        self.model.TIMESERIES_LENGTH = 1024        
         self.model.world = EmptyWorld(self.model); 
         self.model.body = BackAndForthBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,Ω=128)
+        self.model.brain = Brain(self.model,Ω=128,β=512)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -60,7 +60,8 @@ class BackAndForthExperiment(Experiment):
         title = f'{self.name}'
         if self.model.body.TRAINING_PHASE :
             title += ' [TRAINING]'
-        title += f' lr:{self.model.brain.learning_rate}'
+        #title += f' lr:{self.model.brain.learning_rate}'
+        title += f' err:{self.model.brain.prediction_error:.3f}'
         percent_complete(self.model.it,self.duration,title=title)
         self.tracker.iterate(self)
         
@@ -72,8 +73,8 @@ class BackAndForthExperiment(Experiment):
             #self.model.brain.ZERO_LEARNING_RATE = True
             #self.model.brain.learning_rate_exponent = -4
 
-        if self.model.it % 1000 == 0 :
-            self.model.brain.image_2d_output()
+        # if self.model.it % 10000 == 0 :
+        #     self.model.brain.image_2d_output()
 
     def end(self) :
         print('Experiment completed.')
@@ -205,4 +206,5 @@ if __name__ == '__main__':
     gca().set_xticklabels(ticklabels)
     tight_layout()
     savefig(path+'timeseries.png',dpi=300)
+    show()
 

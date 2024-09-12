@@ -32,6 +32,9 @@ from brain import Brain
 from world import BraitenbergWorld, EmptyWorld
 from experiment import Experiment
 
+import torch
+import cProfile
+
 # from kivy.logger import Logger
 # Logger.setLevel(LOG_LEVELS["debug"])
 # Logger.info('title: This is a info message.')
@@ -40,6 +43,8 @@ from experiment import Experiment
 class Model():
     def __init__(self, headless = False, experiment_class = None, *args, **kwargs):
         self.paused = False
+        np.random.seed(6)
+        torch.manual_seed(6)
 
         self.it = 0
         self.time = 0
@@ -128,6 +133,8 @@ if __name__ == '__main__':
         experiment = BackAndForthExperiment
     elif args.experiment == 'braitenberg':
         experiment = BraitenbergExperiment
+    else :
+        experiment = PatternExperiment
 
     if args.headless:
         ## HEADLESS

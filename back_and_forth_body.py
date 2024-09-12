@@ -7,11 +7,9 @@ class BackAndForthBody(Body) :
 
     def __init__(self, model, DT = 0.01) :
         # allowed_sensor_values = np.linspace(0,1,6)
-        # allowed_motor_values = np.linspace(-0.75,0.75,4)
-        allowed_sensor_values = np.linspace(0,1,51)
-        allowed_motor_values = np.linspace(-0.75,0.75,51)
+        allowed_motor_values = np.linspace(-0.3,0.3,5)
+        allowed_sensor_values = np.linspace(0,1,11)
         
-
         os = DiscVal(allowed_sensor_values, 0, name = "OS")
         om = DiscVal(allowed_motor_values, 0, name = "OM")
 
@@ -21,6 +19,10 @@ class BackAndForthBody(Body) :
         self.x = 0.0
 
         self.Δ = 0
+        allowed_motor_values = np.linspace(-0.75,0.75,51)
+        self.sms_familiarity_matrix = np.zeros((self.sensors[0].allowed_values.shape[0], 
+                                                self.motors[0].allowed_values.shape[0]))
+
 
     def update_sensors(self):
         light_pos = 2.5

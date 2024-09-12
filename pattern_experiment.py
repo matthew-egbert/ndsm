@@ -14,15 +14,15 @@ from world import EmptyWorld, BraitenbergWorld
 class PatternExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
-        self.TRAINING_STOP_ITERATION =  51200 / 2
-        self.duration                = 102400 / 2 # 100000
+        self.TRAINING_STOP_ITERATION =  51200 /8
+        self.duration                = 102400 /4 # 100000
 
-        self.model.TIMESERIES_LENGTH = 300
-        self.training_pattern_length = 64#256
+        self.model.TIMESERIES_LENGTH = 1024
+        self.training_pattern_length = 64
 
         self.model.world = EmptyWorld(self.model); 
         self.model.body  = PatternBody(self.model, self.training_pattern_length, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,Ω=self.training_pattern_length)
+        self.model.brain = Brain(self.model,Ω=self.training_pattern_length,β=512)
 
         
         if name is None :

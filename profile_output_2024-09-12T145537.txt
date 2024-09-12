@@ -1,0 +1,55 @@
+Timer unit: 1e-09 s
+
+Total time: 121.364 s
+File: /home/mde/repos/ndsm/brain.py
+Function: learn at line 187
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   187                                           
+   188                                               @line_profiler.profile
+   189    102402 4876415547.0  47620.3      4.0      def learn(self) :
+   190    102402 6925644270.0  67631.9      5.7          self.n_model.train()
+   191    102402   90409475.0    882.9      0.1          self.optimizer.zero_grad()
+   192    204804   52296055.0    255.3      0.0          self.learning_rate = 10.0**(self.learning_rate_exponent) * (not self.ZERO_LEARNING_RATE)
+   193    102402   23100500.0    225.6      0.0          for g in self.optimizer.param_groups:
+   194                                                       g['lr'] = self.learning_rate
+   195    102402 3375156311.0  32959.9      2.8  
+   196                                                   loss_fn = nn.CrossEntropyLoss()
+   197                                           
+   198                                                   # inputs = []
+   199                                                   # outputs = []
+   200                                                   # for τ in range(1,1+self.β): 
+   201                                                   #     i,o = self.get_learning_pair(τ=self.model.it-τ)
+   202                                                   #     inputs.append(i)
+   203                                                   #     outputs.append(o)
+   204                                                   # inputs = np.array(inputs)
+   205                                                   # outputs = np.array(outputs)
+   206    102402   26482365.0    258.6      0.0  
+   207    102402 9056854596.0  88444.1      7.5          r = self.model.it % self.β
+   208    102402  175674426.0   1715.5      0.1          i,o = self.get_learning_pair(τ=self.model.it-1)
+   209    102402   68498289.0    668.9      0.1          self.training_input_matrix[r,:] = i
+   210                                                   self.training_output_matrix[r,:] = o
+   211                                           
+   212                                                   # print(self.model.it)
+   213                                                   # if self.model.it > self.β :
+   214                                                   #     print('-------------------------------')
+   215                                                   #     print(outputs)
+   216                                                   #     print(self.training_output_matrix)
+   217                                                   #     assert(np.sum(outputs) == np.sum(self.training_output_matrix))
+   218                                                   #     assert(np.all(outputs == self.training_output_matrix))
+   219                                                   #     assert(np.all(inputs == self.training_input_matrix))        
+   220    102402 7252642932.0  70825.2      6.0  
+   221    102402        1e+10 114187.1      9.6          nn_input = torch.tensor(self.training_input_matrix,dtype=torch.float32).to(self.device)
+   222                                                   correct_nn_output = torch.tensor(self.training_output_matrix,dtype=torch.float32).to(self.device)
+   223    102402        1e+10 113186.7      9.6  
+   224    102402 5476453141.0  53479.9      4.5          model_out = self.n_model(nn_input)
+   225                                                   loss = loss_fn(model_out,correct_nn_output)
+   226                                           
+   227    102402        3e+10 332115.8     28.0          # Backpropagation
+   228    102402        2e+10 148186.0     12.5          loss.backward()
+   229                                                   self.optimizer.step()
+   230    102402        1e+10 112271.2      9.5  
+   231                                                   self.prediction_error = loss.item()
+
+121.36 seconds - /home/mde/repos/ndsm/brain.py:187 - learn
