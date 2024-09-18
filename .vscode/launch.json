@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "This File!",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--", "--experiment", "back_and_forth"]
+        },
+        {
             "name": "B&F [GUI]",
             "type": "debugpy",
             "request": "launch",
