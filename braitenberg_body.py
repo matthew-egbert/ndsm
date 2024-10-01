@@ -7,7 +7,7 @@ from pylab import concatenate, np
 
 class BraitenbergBody(Body) :
     def __init__(self, model, DT=0.01) :
-        allowed_sensor_values = np.linspace(0,1,3)
+        allowed_sensor_values = np.linspace(0,1,2)
         allowed_motor_values = np.linspace(-1.0,1.0,2)
         ls = DiscVal(allowed_sensor_values, 0, name = "LS")
         rs = DiscVal(allowed_sensor_values, 0, name = "RS")
@@ -22,12 +22,12 @@ class BraitenbergBody(Body) :
         ls = self.sensors[0].value
         rs = self.sensors[1].value
 
-        sensor_noise_scale = 0.0
-        ls += np.random.randn()*sensor_noise_scale
-        rs += np.random.randn()*sensor_noise_scale
+        # sensor_noise_scale = 0.0
+        # ls += np.random.randn()*sensor_noise_scale
+        # rs += np.random.randn()*sensor_noise_scale
 
-        lm = 0.25-2.0*ls + 0.75*rs
-        rm = 0.25-2.0*rs + 0.75*ls
+        lm = 0.75-2.0*ls + 0.95*rs
+        rm = 0.75-2.0*rs + 0.95*ls
 
         motor_noise_scale = 0.0
         lm += np.random.randn()*motor_noise_scale

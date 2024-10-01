@@ -68,6 +68,7 @@ class Body(object) :
                 sensor_excitation = 0.0
             
             self.sensors[sensor_index].value = sensor_excitation
+        #print(self.sensors)
 
     def prepare_to_iterate(self):
         if self.TRAINING_PHASE :                        

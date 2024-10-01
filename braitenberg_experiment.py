@@ -15,14 +15,14 @@ from world import EmptyWorld, BraitenbergWorld
 class BraitenbergExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
-        self.TRAINING_STOP_ITERATION = 20000
-        self.duration                = 50000 # 100000
+        self.TRAINING_STOP_ITERATION = 40000
+        self.duration                = 80000 # 100000
 
-        self.model.TIMESERIES_LENGTH = 32
+        self.model.TIMESERIES_LENGTH = 1024
 
         self.model.world = BraitenbergWorld(self.model)
         self.model.body  = BraitenbergBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,Ω=1)
+        self.model.brain = Brain(self.model,Ω=32,β=512) TRY DIFFERENT VALUES OF Ω
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -51,7 +51,7 @@ class BraitenbergExperiment(Experiment):
         pass
 
     def iterate(self) :
-        percent_complete(self.model.it,self.duration,title='Pattern Experiment')
+        percent_complete(self.model.it,self.duration,title=f'Braitenberg Experiment ERR:{self.model.brain.prediction_error:.4f}')
         self.tracker.iterate(self)
         if self.model.it > self.duration :
             self.end()
@@ -66,7 +66,6 @@ class BraitenbergExperiment(Experiment):
 
 if __name__ == '__main__':
     path = "BraitenbergExperiment/"
-
     red = '#8b0000'
 
     #### POSITION PLOT
@@ -74,123 +73,112 @@ if __name__ == '__main__':
     y = np.load(path+'y.npy')
     time = np.load(path+'time.npy')
     sms = np.load(path+'sms.npy')
-    prediction_error = np.load(path+'prediction_error.npy')
-
-    
+    prediction_error = np.load(path+'prediction_error.npy')    
     po = pickle.load(open(path+'pickle_objs.pkl','rb'))
     DT = po['DT']
-
-    period = po['Ω']
     TRAINING_STOP_ITERATION = po['TRAINING_STOP_ITERATION']
 
-    figure(figsize=(6,6))
-    #arena_plot(x[0:TRAINING_STOP_ITERATION],y[0:TRAINING_STOP_ITERATION],-5,5,-5,5,color='r')
-    #arena_plot(x[TRAINING_STOP_ITERATION:],y[TRAINING_STOP_ITERATION:],-5,5,-5,5,color='k')
-    α,ω = 0,len(time)
+    def position_plot() :
+        figure(figsize=(6,6))
+        #arena_plot(x[0:TRAINING_STOP_ITERATION],y[0:TRAINING_STOP_ITERATION],-5,5,-5,5,color='r')
+        #arena_plot(x[TRAINING_STOP_ITERATION:],y[TRAINING_STOP_ITERATION:],-5,5,-5,5,color='k')
+        α,ω = 0,len(time)
+        
+        for σ in range(α,ω):
+                percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
+                if σ < TRAINING_STOP_ITERATION :
+                    color = 'c'
+                else :
+                    color = 'k'
+                arena_plot(x[σ:σ+2],y[σ:σ+2],-5,5,-5,5,alpha=0.5,color=color)
+                #arena_plot(x[σ:σ+step],y[σ:σ+step],alpha=0.1,color=color)
+        xlim(-5,5)
+        ylim(-5,5)
+
+        tight_layout()
+        savefig(path+'position_full.png',dpi=300)
     
-    for σ in range(α,ω):
-            percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
-            if σ < TRAINING_STOP_ITERATION :
-                color = 'c'
+    def position_slices() :
+        #### POSITION BY TIME SLICES PLOT
+        figure(figsize=(12,16))
+        R = 10
+        C = 8
+        N = R*C
+        section_length = len(time)//N
+        axs =[]    
+        for i in range(N):
+            axs.append( subplot2grid((R,C),(i//C,i%C)) )
+        for i in range(N):
+            plt.sca(axs[i])
+            α = i*section_length;
+            ω = (i+1)*section_length;
+            #title(f'$t\\in${time[α]:.1f}$-${time[ω]:.1f}')
+            if α < TRAINING_STOP_ITERATION :
+                color = 'r'
             else :
                 color = 'k'
-            arena_plot(x[σ:σ+2],y[σ:σ+2],-5,5,-5,5,alpha=0.5,color=color)
-            #arena_plot(x[σ:σ+step],y[σ:σ+step],alpha=0.1,color=color)
-    xlim(-5,5)
-    ylim(-5,5)
+            arena_plot(x[α:ω],y[α:ω],-5,5,-5,5,color=color)
+            xticks([])
+            yticks([])
 
-    tight_layout()
-    savefig(path+'position_full.png',dpi=300)
-    
-    #### POSITION BY TIME SLICES PLOT
-    figure(figsize=(12,16))
-    R = 10
-    C = 8
-    N = R*C
-    section_length = len(time)//N
-    axs =[]    
-    for i in range(N):
-        axs.append( subplot2grid((R,C),(i//C,i%C)) )
-    for i in range(N):
-        plt.sca(axs[i])
-        α = i*section_length;
-        ω = (i+1)*section_length;
-        #title(f'$t\\in${time[α]:.1f}$-${time[ω]:.1f}')
-        if α < TRAINING_STOP_ITERATION :
-            color = 'r'
-        else :
-            color = 'k'
-        arena_plot(x[α:ω],y[α:ω],-5,5,-5,5,color=color)
-        xticks([])
-        yticks([])
-
-    tight_layout()        
-    savefig(path+'position_time_slices.png',dpi=300)
-
-    #### PHASE PLOT
-    figure(figsize=(8,8))
-    theta = time%(period*DT) / (period*DT) * 2*np.pi        
-    r = sms[:,0] * time
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    plot(theta, r,'.',ms=1,label='sensor')
-    title('$r=t; θ=sensor$')
-    #ax.set_rmax(2)
-    gca().set_rticks([])  # Less radial ticks
-    gca().set_rlabel_position(-2.5)  # Move radial labels away from plotted line
-    #legend()
-    #gca().grid(False)
-    tight_layout()        
-    savefig(path+'phase.png',dpi=300)
+        tight_layout()        
+        savefig(path+'position_time_slices.png',dpi=300)
 
     def cleanplot() :
         xticks([])
         plt.box(False)
         xlim(0,time[-1])
 
-    #### SMS PLOT
-    figure(figsize=(8,5))
-    
-    r,c = 5,1
-    subplot2grid((r,c),(0,0))
-    fill_between(time,0*sms[:,0],sms[:,0],label='sensor',step='pre',facecolor='y')
-    plot(time[:-period],running_average(sms[:,0],period)[:-period],lw=0.7,color='k',label='running average')
-    cleanplot()
-    ylabel('sensor')
-    ticks = arange(0,time[-1],period*DT)
-    xticks(ticks)
-    gca().set_xticklabels([f' ' for t in ticks])
-    gca().xaxis.set_ticks_position('top')
-    
-    subplot2grid((r,c),(1,0))
-    fill_between(time,0*sms[:,0]-1,sms[:,1],label='lm',step='pre')
-    plot(time[:-period],running_average(sms[:,1],period)[:-period],lw=0.7,color='k',label='running average')
-    cleanplot()
-    ylabel('LM')
-    
-    subplot2grid((r,c),(2,0))
-    fill_between(time,0*sms[:,0]-1,sms[:,2],label='rm',step='pre',facecolor='g')
-    plot(time[:-period],running_average(sms[:,2],period)[:-period],lw=0.7,color='k',label='running average')
-    cleanplot()
-    ylabel('RM')
-    
-    subplot2grid((r,c),(3,0),rowspan=2)
-    log_prediction_error = np.log(prediction_error,where=prediction_error!=0)
-    fill_between(time,log_prediction_error*0-10,log_prediction_error,step='pre',label='log($\\epsilon$)',facecolor=red,alpha=0.7)
-    plot(time[:-period],running_average(log_prediction_error,period)[:-period],lw=0.7,color='k',label='running average')
-    ylim(-9,1.8)
-    ylabel('log($\\epsilon$)')
-    cleanplot()
-    ticks = arange(0,time[-1],period*DT)
-    xticks(ticks)
-    ticklabels = [f' ' for t in ticks]
-    ticklabels[0] = '0'
-    ticklabels[-1] = f'{time[-1]:.0f}'
-    ticklabels[len(ticklabels)//2] = f'{time[-1]/2:.0f}'
-    ticklabels[len(ticklabels)//4] = f'{time[-1]/4:.0f}'
-    ticklabels[3*len(ticklabels)//4] = f'{3*time[-1]/4:.0f}'
-    gca().set_xticklabels(ticklabels)
-    xlabel('time')
-    tight_layout()
-    savefig(path+'sms.png',dpi=300)
+    def timeseries_plot() :    
+        figure(figsize=(8,5))
+        
+        r,c = 6,1
+        subplot2grid((r,c),(0,0))
+        fill_between(time,0*sms[:,0],sms[:,0],label='LS',step='pre',facecolor='y')
+        #plot(time[:-period],running_average(sms[:,0],period)[:-period],lw=0.7,color='k',label='running average')
+        cleanplot()
+        ylim(sms[:,0].min(),sms[:,0].max())
+        ylabel('LS')
+        
+        subplot2grid((r,c),(1,0))
+        fill_between(time,0*sms[:,1]-1,sms[:,1],label='RS',step='pre',facecolor='y')
+        #plot(time[:-period],running_average(sms[:,1],period)[:-period],lw=0.7,color='k',label='running average')
+        cleanplot()
+        ylim(sms[:,1].min(),sms[:,1].max())
+        ylabel('RS')
+        
+        subplot2grid((r,c),(2,0))
+        fill_between(time,0*sms[:,2]-1,sms[:,2],label='LM',step='pre',facecolor='g')
+        #plot(time[:-period],running_average(sms[:,2],period)[:-period],lw=0.7,color='k',label='running average')
+        cleanplot()
+        ylim(sms[:,2].min(),sms[:,2].max())
+        ylabel('LM')
 
+        subplot2grid((r,c),(3,0))
+        fill_between(time,0*sms[:,3]-1,sms[:,3],label='RM',step='pre',facecolor='g')
+        #plot(time[:-period],running_average(sms[:,2],period)[:-period],lw=0.7,color='k',label='running average')
+        cleanplot()
+        ylim(sms[:,3].min(),sms[:,3].max())
+        ylabel('RM')
+        
+        subplot2grid((r,c),(4,0),rowspan=2)
+        log_prediction_error = np.log(prediction_error,where=prediction_error!=0)
+        fill_between(time,log_prediction_error*0-10,log_prediction_error,step='pre',label='log($\\epsilon$)',facecolor=red,alpha=0.7)
+        #plot(time[:-period],running_average(log_prediction_error,period)[:-period],lw=0.7,color='k',label='running average')
+        ylim(-9,1.8)
+        ylabel('log($\\epsilon$)')
+        plt.box(False)
+        xlim(0,time[-1])
+
+        xlabel('time')
+        tight_layout()
+        savefig(path+'timeseries.png',dpi=300)
+
+    position_plot()
+    position_slices()    
+    timeseries_plot()
+    #show()
+    # figure(figsize=(8,5))
+    # imshow(sms.T,aspect='auto',cmap='viridis',origin='lower',extent=[0,time[-1],0,3])
+    # show()
 
