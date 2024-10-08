@@ -1,0 +1,234 @@
+#:kivy 1.0
+#:import kci kivy.core.image
+#:import rvit_colors rvit.core.colors
+#:import LineRenderer rvit.core.vis.line_renderer
+#:import ArrayRenderer rvit.core.vis.array_renderer
+#:import PointRenderer rvit.core.vis.point_renderer
+#:import VectorTracker rvit.core.vis.vector_tracker
+#:import ScalarTracker rvit.core.vis.scalar_tracker
+#:import RVIButton rvit.core.int.rvi_button
+#:import RVIToggleButton rvit.core.int.rvi_togglebutton
+#:import RVISlider rvit.core.int.rvi_slider
+#:import SpriteRenderer rvit.core.vis.sprite_renderer
+
+#:set timeseries_x 0.51
+#:set timeseries_w 0.49
+#:set physical_world_radius 5
+
+
+FloatLayout:
+    SpriteRenderer:
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
+        x_data: 'body.x'
+        y_data: 'body.y'
+        rot_data: 'body.α'
+        sprite_size: 0.9 ## this should be the robot's diameter
+        unique_name: 'body_overhead' ## oddity: this has to come after everything else
+        image: kci.Image('img/2drobot.png').texture
+        show_controls: False
+
+    LineRenderer:
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
+        color: [1.0,0.0,1.0,0.5]
+        x_data: 'body.drawable_sensor_lines[:,0]'
+        y_data: 'body.drawable_sensor_lines[:,1]'        
+        show_controls: True
+        unique_name: 'sensors'        
+        
+    PointRenderer:
+        x_data: 'body.x_h'
+        y_data: 'body.y_h'
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        point_size: 0.1
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
+        unique_name: 'trail' ## oddity: this has to come after everything else
+        show_controls: False
+
+    LineRenderer:
+        pos_hint: {'x':0.0, 'y':0.5}
+        size_hint:  (0.25,0.5)
+        xmin: -1.1*physical_world_radius
+        xmax: 1.1*physical_world_radius
+        ymin: -1.1*physical_world_radius
+        ymax: 1.1*physical_world_radius
+        x_data: 'wall_lines[:,0]'
+        y_data: 'wall_lines[:,1]'
+        show_controls: False
+        unique_name: 'walls'
+            
+    ArrayRenderer: # A Visualizer 
+        array_data: 'brain.prediction_h[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: (x/5.0)'
+        pos_hint: {'x':timeseries_x, 'y':0.75}
+        size_hint:  (timeseries_w,0.125)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        vmin: -1
+        vmax: 1
+        gradient: 'Purples_r'
+        show_controls: True       
+        unique_name: 'prediction'   # a unique identifier for this visualizer
+
+    ArrayRenderer: 
+        array_data: 'body.sms_h[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: (x/5.0)'
+        pos_hint: {'x':timeseries_x, 'y':0.5+0.125}
+        size_hint:  (timeseries_w,0.125)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        vmin: -1
+        vmax: 1     
+        gradient: 'Blues_r'
+        show_controls: True       
+        unique_name: 'Sensorimotor State'   # a unique identifier for this visualizer
+
+    VectorTracker:
+        pos_hint: {'x':timeseries_x, 'y':0.75+0.125}
+        size_hint:  (timeseries_w,0.125)
+        # y_vector_preprocess: 'lambda x: np.log(x,where=x!=0)'
+        fill: 'columns'
+        ymin: 0.0
+        ymax: 10.0
+        color: [0.0,1.0,1.0,1.0]
+        y_vector: 'brain.prediction_errors'
+        unique_name: 'prediction_error'
+
+    VectorTracker:
+        pos_hint: {'x':timeseries_x, 'y':0.5}
+        size_hint:  (timeseries_w,0.125)
+        y_vector_preprocess: 'lambda x: np.log(x,where=x!=0)'
+        fill: 'columns'
+        ymin: -5.0
+        ymax: 0.0
+        color: [1.0,0.8,0.0,1.0]
+        y_vector: 'brain.output_probabilities'
+        unique_name: 'log_output_probabilities'         
+
+    VectorTracker:
+        pos_hint: {'x':timeseries_x, 'y':0.5}
+        size_hint:  (timeseries_w,0.125)
+        #y_vector_preprocess: 'lambda x: np.log(x,where=x!=0)'
+        fill: 'columns'
+        ymin: 0.0
+        ymax: 1.0
+        color: [1.0,1.0,1.0,0.5]
+        y_vector: 'brain.most_recent_output'
+        unique_name: 'most_recent_output'
+        show_controls: False
+
+    ArrayRenderer: 
+        array_data: 'brain.output_probabilities_h[:,:]'         # a DataSource
+        #array_data_preprocess: 'lambda x: 8+0.1*np.log(x,where=x!=0)'
+        pos_hint: {'x':timeseries_x, 'y':0.0}
+        size_hint:  (timeseries_w,0.5)        
+        xmin: 0.0
+        xmax: 1.0
+        ymin: 0.0
+        ymax: 1.0
+        gradient: 'Greys_r'
+        show_controls: True       
+        unique_name: 'output history'   # a unique identifier for this visualizer
+
+    RVISlider:
+        pos_hint: {'x':0.02 ,'y':0.025}
+        size_hint: (0.05,0.45)
+        orientation: 'vertical'
+        slider_min: -4
+        slider_max: -1
+        slider_index: 0
+        scalar: 'brain.learning_rate_exponent'
+        unique_name: 'Learning Rate Exponent' 
+
+    RVISlider:
+        pos_hint: {'x':0.08 ,'y':0.025}
+        size_hint: (0.1,0.45)
+        orientation: 'vertical'
+        slider_min: 0.0
+        slider_max: 0.5
+        slider_index: 0
+        scalar: 'sleep_amount'
+        unique_name: 'delay' 
+
+
+    RVIToggleButton:
+        pos_hint: {'x':0.18 ,'y':0.45}
+        size_hint: (0.06,0.05)
+        boolean: 'body.TRAINING_PHASE'
+        text: 'TRAIN' 
+
+    RVIToggleButton:
+        pos_hint: {'x':0.18 ,'y':0.39}
+        size_hint: (0.06,0.05)
+        boolean: 'brain.DETERMINISTIC_NN_OUTPUT'
+        text: 'DETERMINISTIC'
+
+    RVIToggleButton:
+        pos_hint: {'x':0.18 ,'y':0.33}
+        size_hint: (0.06,0.05)
+        boolean: 'brain.ZERO_LEARNING_RATE'
+        text: 'LR=0'
+
+    RVIToggleButton:
+        pos_hint: {'x':0.18 ,'y':0.27}
+        size_hint: (0.06,0.05)
+        boolean: 'paused'
+        text: 'PAUSED'        
+
+    RVIButton:
+        pos_hint: {'x':0.18 ,'y':0.21}
+        size_hint: (0.06,0.05)
+        background_color: rvit_colors.ORANGE
+        function: 'brain.train_on_file("sms_recording.npy")'
+        text: 'InstaTrain'
+        
+    RVIToggleButton:
+        pos_hint: {'x':0.18 ,'y':0.15}
+        size_hint: (0.06,0.05)
+        background_color: rvit_colors.RED
+        boolean: 'recording_sms'
+        text: 'REC. SMS Hist.'  
+
+    RVIButton:
+        pos_hint: {'x':0.18 ,'y':0.09}
+        background_color: rvit_colors.PINK
+        size_hint: (0.06,0.05)
+        function: 'brain.image_2d_output()'
+        text: 'VIS. OUT.' 
+
+#    ArrayRenderer: 
+#        array_data: 'body.sms_familiarity_matrix[:,:]'         # a DataSource
+#        #array_data_preprocess: 'lambda x: 8+0.1*np.log(x,where=x!=0)'
+#        pos_hint: {'x':0.25, 'y':0.0}
+#        size_hint:  (0.25,0.5)        
+#        xmin: 0.0
+#        xmax: 1.0
+#        ymin: 0.0
+#        ymax: 1.0
+#        vmax: 1.0
+#        gradient: 'Greys_r'
+#        show_controls: True       
+#        unique_name: 'familiarity'   # a unique identifier for this visualizer
+
+
+# ### Local Variables: ###
+# ### mode: python ###
+# ### python-main-file: "main.py" ###
+# ### End: ###

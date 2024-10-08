@@ -39,5 +39,5 @@ class BraitenbergBody(Body) :
         self.next_motors[0].value = lm
         self.next_motors[1].value = rm
 
-        if self.model.it % 1000 == 0 :
-            self.randomize_position()
+        # if self.model.it % 1000 == 0 :
+        #     self.randomize_position()

@@ -19,6 +19,8 @@ class Experiment(object):
         self.START           = lambda exp: exp.model.it == 0
         self.END             = lambda exp: exp.model.it == exp.duration-1
 
+        self.tracker.add_pickle_obj('seed',self.model.seed)
+
         #self.tracker.track('time','model.it',should_sample=self.EVERY_ITERATION)
         #self.tracker.track('x','model.body.x',should_sample=self.EVERY_ITERATION)
         #self.tracker.track('deltas','model.brain.deltas[:,:,0]',should_sample=self.EVERY_ITERATION)

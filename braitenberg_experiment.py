@@ -22,7 +22,7 @@ class BraitenbergExperiment(Experiment):
 
         self.model.world = BraitenbergWorld(self.model)
         self.model.body  = BraitenbergBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,Ω=32,β=512) TRY DIFFERENT VALUES OF Ω
+        self.model.brain = Brain(self.model,Ω=32,β=512)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         α,ω = 0,len(time)
         
         for σ in range(α,ω):
-                percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
+                #percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
                 if σ < TRAINING_STOP_ITERATION :
                     color = 'c'
                 else :

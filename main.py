@@ -43,8 +43,11 @@ import cProfile
 class Model():
     def __init__(self, headless = False, experiment_class = None, *args, **kwargs):
         self.paused = False
-        np.random.seed(6)
-        torch.manual_seed(6)
+        self.seed = np.random.randint(0,1000)
+        self.seed = 6
+        print(f"SEED: {self.seed}")
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
 
         self.it = 0
         self.time = 0
@@ -98,9 +101,12 @@ class Model():
             #         print(f'##### it: {self.it} ')            
             self.brain.prepare_to_iterate()
             self.body.prepare_to_iterate()
+            self.world.prepare_to_iterate()
 
             self.brain.iterate()
             self.body.iterate()
+            self.world.iterate()
+            self.wall_lines = np.array(self.world.walls, dtype=float).reshape(-1,2)
             
             self.experiment.iterate()
             
