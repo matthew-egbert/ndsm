@@ -62,6 +62,7 @@ class Brain(object) :
         self.model = model
         self.Ω = Ω 
         self.β = β
+        assert(self.Ω + 2 < self.model.TIMESERIES_LENGTH) ## make sure we have enough history to train the NN
         self.body : Body = self.model.body
         self.learning_rate_exponent = -3
         self.DETERMINISTIC_NN_OUTPUT = False
@@ -76,9 +77,9 @@ class Brain(object) :
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
         
         self.device = "cuda" ; print(f"Using {self.device} device")
-        self.n_model = my_nn.to(self.device)
+        self.ffnn = my_nn.to(self.device) ## feedforward neural network
         self.learning_rate = exp(self.learning_rate_exponent)
-        self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.9)
+        self.optimizer = torch.optim.SGD(self.ffnn.parameters(), lr=self.learning_rate, momentum=0.9)
         self.prediction_error = 0.0
         self.prediction_errors = np.zeros(self.model.TIMESERIES_LENGTH)
         self.prediction_h = np.zeros((self.N_SENSORS+self.N_MOTORS, self.model.TIMESERIES_LENGTH))
@@ -161,7 +162,7 @@ class Brain(object) :
             g['lr'] = self.learning_rate
 
         loss_fn = nn.CrossEntropyLoss()
-        self.n_model.train()
+        self.ffnn.train()
 
         print(f'Loading training data from {filename}')
         print(f'size: {np.load(filename).shape}')
@@ -178,7 +179,7 @@ class Brain(object) :
             correct_nn_output = torch.tensor(outputs,dtype=torch.float32).to(self.device)
             # print(f'correct_nn_output: {correct_nn_output}')
 
-            model_out = self.n_model(nn_input)
+            model_out = self.ffnn(nn_input)
             # print(f'model_out: {model_out}')
             loss = loss_fn(model_out,correct_nn_output)
 
@@ -189,13 +190,13 @@ class Brain(object) :
 
         #self.prediction_error = loss.item
 
-    @line_profiler.profile
+    ##@line_profiler.profile
     def learn(self) :
-        if self.model.it == self.model.experiment.TRAINING_STOP_ITERATION :
+        if self.model.it == self.model.experiment.training_stop_iteration :
             print('CHANGING OPTIMIZER!!!')
-            self.optimizer = torch.optim.SGD(self.n_model.parameters(), lr=self.learning_rate, momentum=0.0)
+            self.optimizer = torch.optim.SGD(self.ffnn.parameters(), lr=self.learning_rate, momentum=0.0)
 
-        self.n_model.train()
+        self.ffnn.train()
         self.optimizer.zero_grad()
         self.learning_rate = 10.0**(self.learning_rate_exponent) * (not self.ZERO_LEARNING_RATE)
         for g in self.optimizer.param_groups:
@@ -224,7 +225,7 @@ class Brain(object) :
             nn_input = torch.tensor(self.training_input_matrix,dtype=torch.float32).to(self.device)
             correct_nn_output = torch.tensor(self.training_output_matrix,dtype=torch.float32).to(self.device)
 
-            model_out = self.n_model(nn_input)
+            model_out = self.ffnn(nn_input)
             loss = loss_fn(model_out,correct_nn_output)
 
             # Backpropagation
@@ -234,12 +235,12 @@ class Brain(object) :
             self.prediction_error = loss.item()
 
     def act(self) :
-        self.n_model.eval()
+        self.ffnn.eval()
         
         action_input_cols, _ = self.get_input_output_columns(τ=self.model.it)
         action_input = self.body.sms_h[:,action_input_cols]
         nn_input = torch.tensor(action_input.flatten(),dtype=torch.float32).to(self.device)
-        model_out = self.n_model(nn_input)
+        model_out = self.ffnn(nn_input)
         ps = nn.Softmax(dim=0)(model_out)
         ps = ps.cpu().detach().numpy()        
         self.output_probabilities = ps
@@ -288,7 +289,7 @@ class Brain(object) :
         self.act()
 
     def image_2d_output(self) :        
-        self.n_model.eval()
+        self.ffnn.eval()
         action_input_cols, _ = self.get_input_output_columns(τ=self.model.it)
         
         ## this is the base input to the NN
@@ -300,7 +301,7 @@ class Brain(object) :
             base_input[0,-1] = x[1]
             base_input[1,-1] = x[0]
             nn_input = torch.tensor(base_input.flatten(),dtype=torch.float32).to(self.device)
-            model_out = self.n_model(nn_input)
+            model_out = self.ffnn(nn_input)
             ps = nn.Softmax(dim=0)(model_out)
             ps = ps.cpu().detach().numpy()
 

@@ -14,40 +14,28 @@ from world import EmptyWorld, BraitenbergWorld
 
 class BraitenbergExperiment(Experiment):
     def __init__(self,model,name=None) :
-        self.model = model
+        super().__init__(model,name)
         self.TRAINING_STOP_ITERATION = 40000
         self.duration                = 80000 # 100000
 
+        ## BRAITENBERG
         self.model.TIMESERIES_LENGTH = 1024
-
         self.model.world = BraitenbergWorld(self.model)
         self.model.body  = BraitenbergBody(self.model, DT=self.model.DT); 
         self.model.brain = Brain(self.model,Ω=1,β=128)
-        
-        if name is None :
-            self.name = type(self).__name__ ## gets the class name of the experiment by default
-        else :
-            self.name = name
-    
-        self.tracker = TrackingManager(self.name)
-        self.EVERY_ITERATION = lambda exp: True
-        self.FREQUENTLY      = lambda exp: (m.it % 10) == 0 # type: ignore
-        self.START           = lambda exp: exp.model.it == 0
-        self.END             = lambda exp: exp.model.it == exp.duration-1
 
-        self.tracker.add_pickle_obj('DT',self.model.DT)
-        self.tracker.add_pickle_obj('Ω',self.model.brain.Ω)          
-        self.tracker.add_pickle_obj('TRAINING_STOP_ITERATION',self.TRAINING_STOP_ITERATION)
-
+        ## DATA TO TRACK
         self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)
-        self.tracker.track('it','model.it',should_sample=self.EVERY_ITERATION)
+        self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
+
         self.tracker.track('x','model.body.x',should_sample=self.EVERY_ITERATION)
         self.tracker.track('y','model.body.y',should_sample=self.EVERY_ITERATION)
         self.tracker.track('α','model.body.α',should_sample=self.EVERY_ITERATION)
-        self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
         self.tracker.track('sms','model.body.sms',should_sample=self.EVERY_ITERATION)
 
         self.last_it_t = time.time()
+
+        self.add_default_trackers()
 
     def reset(self) :
         pass

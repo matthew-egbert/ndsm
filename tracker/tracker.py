@@ -30,8 +30,8 @@ class TrackedValue(object):
             self.data.append( deepcopy(eval('m.'+self.getfn)) )
 
 class TrackingManager(object):
-    def __init__(self,name) :
-        self.name = s = ''.join(filter(str.isalnum, name)) ## strips to alphanumeric
+    def __init__(self,folder_name) :
+        self.folder_name = folder_name
         self.trackers = []
         self.pickle_objs = {}
 
@@ -47,7 +47,7 @@ class TrackingManager(object):
 
     def save(self,folder_path=None):
         if folder_path is None :
-            folder_path = self.name
+            folder_path = self.folder_name
             
         path = folder_path
         try:
@@ -66,6 +66,11 @@ class TrackingManager(object):
 
         with open(os.path.join(folder_path,f'pickle_objs.pkl'), 'wb') as file:
             pickle.dump(self.pickle_objs, file)
+
+        with open(os.path.join(folder_path, 'pickle_objs.txt'), 'w') as file:
+            for key, value in self.pickle_objs.items():
+                file.write(f'{key}: {value}\n')
+
         self.data_saved_at = path
 
     def data(self,name) :

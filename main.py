@@ -2,6 +2,7 @@ from time import sleep
 from kivy import platform
 from kivy.config import Config
 from kivy.clock import Clock
+import os
 
 from experiments.back_and_forth_experiment import BackAndForthExperiment
 from back_and_forth_body import BackAndForthBody
@@ -36,11 +37,14 @@ import torch
 import cProfile
 
 class Model():
-    def __init__(self, headless = False, experiment_class = None, *args, **kwargs):
+    def __init__(self, seed, headless = False, experiment_class = None, *args, **kwargs):
         self.paused = False
         self.seed = np.random.randint(0,1000)
-        self.seed = 3
+        self.seed = seed
         print(f"SEED: {self.seed}")
+        self.OUTPUT_DIR = f'./results/{experiment_class.__name__}_{seed}/'
+        os.makedirs(self.OUTPUT_DIR, exist_ok=True)
+
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
 
@@ -50,7 +54,7 @@ class Model():
         self.sleep_amount = 0.0
         self.headless = headless
 
-        self.TIMESERIES_LENGTH = 1024
+        self.TIMESERIES_LENGTH = 1024 ## how long a history of states is remembered
 
         self.recording_sms = False
         self.sms_recording_history = None
@@ -112,10 +116,12 @@ class Model():
 if __name__ == '__main__':
     import argparse
 
+
     parser = argparse.ArgumentParser("simple_example")
     #parser.add_argument("counter", help="An integer will be increased by 1 and printed.", type=int)
     parser.add_argument("--headless", help="Run in headless mode.", action="store_true")
     parser.add_argument("--experiment", help="Experiment to run.", type=str)
+    parser.add_argument("--seed", help="RNG seed", type=int, default=np.random.randint(0,9))
     args = parser.parse_args()
     
     if args.experiment == 'pattern':
@@ -131,9 +137,9 @@ if __name__ == '__main__':
 
     if args.headless:
         ## HEADLESS
-        m = Model(headless=True, experiment_class=experiment)        
+        m = Model(headless=True, experiment_class=experiment,seed=args.seed)        
     else:       
         ## HEADFUL
         from rvit.core import init_rvit # type: ignore
-        m = Model(experiment_class=experiment)
+        m = Model(experiment_class=experiment,seed=args.seed)
         init_rvit(m,rvit_file='rvit.kv',window_size=(500,250))

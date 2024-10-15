@@ -17,41 +17,27 @@ import matplotlib.patches as patches
 
 class BackAndForthExperiment(Experiment):
     def __init__(self,model,name=None) :
-        self.model = model
+        super().__init__(model,name)
         self.duration = 51200 #float('inf') # 10000
         self.TRAINING_STOP_ITERATION = 25600
 
-        ## ## BACK AND FORTH
-        #self.world : World = EmptyWorld(self); self.body : Body = BackAndForthBody(self,DT=self.DT); self.brain : Brain = Brain(self,sm_duration=64)
+        ## BACK AND FORTH
         self.model.TIMESERIES_LENGTH = 1024        
         self.model.world = EmptyWorld(self.model); 
-        self.model.body = BackAndForthBody(self.model, DT=self.model.DT); 
+        self.model.body  = BackAndForthBody(self.model, DT=self.model.DT); 
         self.model.brain = Brain(self.model,Ω=128,β=512)
-        
-        if name is None :
-            self.name = type(self).__name__ ## gets the class name of the experiment by default
-        else :
-            self.name = name
-    
-        self.tracker = TrackingManager(self.name)
-        self.EVERY_ITERATION = lambda exp: True
-        self.FREQUENTLY      = lambda exp: (m.it % 10) == 0 # type: ignore
-        self.START           = lambda exp: exp.model.it == 0
-        self.END             = lambda exp: exp.model.it == exp.duration-1
+            
+        ## DATA TO TRACK
+        self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)        
+        self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
 
-        self.tracker.add_pickle_obj('DT',self.model.DT)
-        self.tracker.add_pickle_obj('TIMESERIES_LENGTH',self.model.TIMESERIES_LENGTH)                                    
-        self.tracker.add_pickle_obj('Ω',self.model.brain.Ω)        
-        self.tracker.add_pickle_obj('TRAINING_STOP_ITERATION',self.TRAINING_STOP_ITERATION)
-
-        self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)
-        #self.tracker.track('it','model.it',should_sample=self.EVERY_ITERATION)
         self.tracker.track('x','model.body.x',should_sample=self.EVERY_ITERATION)
         self.tracker.track('y','model.body.y',should_sample=self.EVERY_ITERATION)
-        self.tracker.track('α','model.body.α',should_sample=self.EVERY_ITERATION)
-        self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
+        self.tracker.track('α','model.body.α',should_sample=self.EVERY_ITERATION)        
         self.tracker.track('sms','model.body.sms',should_sample=self.EVERY_ITERATION)
-        #self.tracker.track('deltas','model.brain.deltas[:,:,0]',should_sample=self.EVERY_ITERATION)
+
+        self.add_default_trackers()
+
 
     def reset(self) :
         pass

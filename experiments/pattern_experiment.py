@@ -13,10 +13,11 @@ import matplotlib.patches as patches
 
 class PatternExperiment(Experiment):
     def __init__(self,model,name=None) :
-        self.model = model
-        self.TRAINING_STOP_ITERATION =  51200 /8
-        self.duration                = 102400 /4 # 100000
+        super().__init__(model,name)
+        self.duration                = 25600 / 10 
+        self.training_stop_iteration =  int(self.duration // 4)
 
+        ## PATTERN EXPERIMENT
         self.model.TIMESERIES_LENGTH = 1024
         self.training_pattern_length = 64
         self.β = 512
@@ -25,30 +26,18 @@ class PatternExperiment(Experiment):
         self.model.body  = PatternBody(self.model, self.training_pattern_length, DT=self.model.DT);
         self.model.brain = Brain(self.model,Ω=self.training_pattern_length,β=self.β)
 
-
-        if name is None :
-            self.name = type(self).__name__ ## gets the class name of the experiment by default
-        else :
-            self.name = name
-
-        self.tracker = TrackingManager(self.name)
-        self.EVERY_ITERATION = lambda exp: True
-        self.FREQUENTLY      = lambda exp: (m.it % 10) == 0 # type: ignore
-        self.START           = lambda exp: exp.model.it == 0
-        self.END             = lambda exp: exp.model.it == exp.duration-1
-
-        self.tracker.add_pickle_obj('DT',self.model.DT)
+        ## DATA TO TRACK
         self.tracker.add_pickle_obj('training_pattern_length',self.training_pattern_length)
-        self.tracker.add_pickle_obj('TRAINING_STOP_ITERATION',self.TRAINING_STOP_ITERATION)
-        self.tracker.add_pickle_obj('β',self.β)
+        self.tracker.add_pickle_obj('training_stop_iteration',self.training_stop_iteration)
 
         self.tracker.track('time','model.time',should_sample=self.EVERY_ITERATION)
-        self.tracker.track('it','model.it',should_sample=self.EVERY_ITERATION)
+        self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
         self.tracker.track('x','model.body.x',should_sample=self.EVERY_ITERATION)
         self.tracker.track('y','model.body.y',should_sample=self.EVERY_ITERATION)
         self.tracker.track('α','model.body.α',should_sample=self.EVERY_ITERATION)
-        self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
         self.tracker.track('sms','model.body.sms',should_sample=self.EVERY_ITERATION)
+
+        self.add_default_trackers()
 
     def reset(self) :
         pass
@@ -65,13 +54,10 @@ class PatternExperiment(Experiment):
         if self.model.it > self.duration :
             self.end()
 
-        if self.model.it > self.TRAINING_STOP_ITERATION :
+        if self.model.it > self.training_stop_iteration :
             self.model.body.TRAINING_PHASE = False
 
-    def end(self) :
-        print('Experiment completed.')
-        self.tracker.save()
-        quit()
+
 
 class NoTrainingExperiment(PatternExperiment) :
     def __init__(self,model,name=None) :
@@ -93,7 +79,7 @@ if __name__ == '__main__':
     po = pickle.load(open(path+'pickle_objs.pkl','rb'))
     DT = po['DT']
     training_pattern_length = po['training_pattern_length']
-    TRAINING_STOP_ITERATION = po['TRAINING_STOP_ITERATION']
+    training_stop_iteration = po['training_stop_iteration']
 
     #### POSITION PLOT
     def position_plot() :
@@ -104,7 +90,7 @@ if __name__ == '__main__':
 
         for σ in range(α,ω):
                 percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
-                if σ < TRAINING_STOP_ITERATION :
+                if σ < training_stop_iteration :
                     color = 'c'
                 else :
                     color = 'k'
@@ -129,7 +115,7 @@ if __name__ == '__main__':
             α = i*section_length;
             ω = (i+1)*section_length;
             #title(f'$t\\in${time[α]:.1f}$-${time[ω]:.1f}')
-            if α < TRAINING_STOP_ITERATION :
+            if α < training_stop_iteration :
                 color = 'r'
             else :
                 color = 'k'
@@ -194,7 +180,7 @@ if __name__ == '__main__':
         minv = prediction_error[512+1:].min()
         maxv = prediction_error[512+1:].max()
         #fill_between(time[],0*prediction_error[512+1:],prediction_error[512+1:],color=red,alpha=0.5)
-        rect = patches.Rectangle((0,minv), TRAINING_STOP_ITERATION*DT, maxv+0.4, linewidth=0, edgecolor='w', facecolor='0.666')
+        rect = patches.Rectangle((0,minv), training_stop_iteration*DT, maxv+0.4, linewidth=0, edgecolor='w', facecolor='0.666')
         text(2,10**-3.2,'TRAINING PHASE',fontsize=6,ha='left',color='w')
         gca().add_patch(rect)
         yscale('log')
