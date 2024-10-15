@@ -12,6 +12,8 @@ from world import EmptyWorld, BraitenbergWorld
 import matplotlib.patches as patches
 
 
+
+
 class PatternExperiment(Experiment):
     def __init__(self,model,name=None) :
         self.model = model
@@ -74,8 +76,15 @@ class PatternExperiment(Experiment):
         self.tracker.save()
         quit()
 
+class NoTrainingExperiment(PatternExperiment) :
+    def __init__(self,model,name=None) :
+        super().__init__(model,name=name)
+        self.TRAINING_STOP_ITERATION = 0
+        self.duration = 102400*4
+
 if __name__ == '__main__':
-    path = "PatternExperiment/"
+    #path = "PatternExperiment/"
+    path = "NoTrainingExperiment/"
 
     red = '#8b0000'
     x = np.load(path+'x.npy')
@@ -94,7 +103,7 @@ if __name__ == '__main__':
         #    figure(figsize=(6,6))
         #arena_plot(x[0:TRAINING_STOP_ITERATION],y[0:TRAINING_STOP_ITERATION],-5,5,-5,5,color='r')
         #arena_plot(x[TRAINING_STOP_ITERATION:],y[TRAINING_STOP_ITERATION:],-5,5,-5,5,color='k')
-        α,ω = 0,len(time)
+        α,ω = len(time)-2560,len(time)
 
         for σ in range(α,ω):
                 percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
@@ -209,8 +218,9 @@ if __name__ == '__main__':
             #text(-0.1,1.05 f'$t\in{α*DT:.1f},{ω*DT:.1f}$',fontsize=8,rotation=0,transform=fig.transFigure)
             #ylabel('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index],fontsize=8,rotation=0)
             fig = plt.gcf()
-            text(-0.15, 0.8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index], fontsize=7, rotation=0, transform=gca().transAxes,va='center',ha='center')
-            text(-0.15, 0.2, f'{α*DT:.2f}-{ω*DT:.2f}', fontsize=7, rotation=0, transform=gca().transAxes,va='center',ha='center')
+            if index < 26 :
+                text(-0.15, 0.8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'[index], fontsize=7, rotation=0, transform=gca().transAxes,va='center',ha='center')
+                text(-0.15, 0.2, f'{α*DT:.2f}-{ω*DT:.2f}', fontsize=7, rotation=0, transform=gca().transAxes,va='center',ha='center')
             plt.box(False)
             ylim(-0.05,2.0)
             xlim(α,ω)
@@ -256,13 +266,13 @@ if __name__ == '__main__':
         #aws = set(aws)
 
         fig_width = 7
-        fig = figure(figsize=(fig_width,7))
-        rows = len(aws)
-        for index,aw in enumerate(aws) :
-            subplot2grid((rows,1),(index,0))
-            sms_slice_plot(index,aw[0],aw[1])
-        tight_layout()        
-        savefig(path+'pattern_details.png',dpi=300, bbox_inches="tight")
+        # fig = figure(figsize=(fig_width,7))
+        # rows = len(aws)
+        # for index,aw in enumerate(aws) :
+        #     subplot2grid((rows,1),(index,0))
+        #     sms_slice_plot(index,aw[0],aw[1])
+        # tight_layout()        
+        # savefig(path+'pattern_details.png',dpi=300, bbox_inches="tight")
 
         figure(figsize=(fig_width,2.5))
         error_plot()
@@ -278,19 +288,20 @@ if __name__ == '__main__':
             else :
                 ap = dict(arrowstyle='-', color='0.0', lw=0.8, shrinkB=0)
 
-            gca().annotate('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index], xy=(x, y), xytext=(x,1), fontsize=8, ha='center', va='bottom', color='k', alpha=1.0,
-                            arrowprops=ap)
+            if index < 26 :
+                gca().annotate('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'[index], xy=(x, y), xytext=(x,1), fontsize=8, ha='center', va='bottom', color='k', alpha=1.0,
+                                arrowprops=ap)
        
 
         tight_layout()
         # fig.subplots_adjust(hspace=0.0)
         savefig(path+'pattern_error.png',dpi=300, bbox_inches="tight")
 
-    # position_plot()
-    # position_time_slices_plot()
+    position_plot()
+    position_time_slices_plot()
     # phase_plot()
     # timeseries_plot()
-    # error_plot()
+    #error_plot()
     publication_plot()
     #show()
 

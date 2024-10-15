@@ -22,7 +22,7 @@ class BraitenbergExperiment(Experiment):
 
         self.model.world = BraitenbergWorld(self.model)
         self.model.body  = BraitenbergBody(self.model, DT=self.model.DT); 
-        self.model.brain = Brain(self.model,Ω=32,β=512)
+        self.model.brain = Brain(self.model,Ω=1,β=128)
         
         if name is None :
             self.name = type(self).__name__ ## gets the class name of the experiment by default
@@ -47,11 +47,19 @@ class BraitenbergExperiment(Experiment):
         self.tracker.track('prediction_error','model.brain.prediction_error',should_sample=self.EVERY_ITERATION)
         self.tracker.track('sms','model.body.sms',should_sample=self.EVERY_ITERATION)
 
+        self.last_it_t = time.time()
+
     def reset(self) :
         pass
 
     def iterate(self) :
-        percent_complete(self.model.it,self.duration,title=f'Braitenberg Experiment ERR:{self.model.brain.prediction_error:.4f}')
+        last_time = self.last_it_t
+        self.last_it_t = time.time()
+        diff = self.last_it_t - last_time
+        if self.model.it % 100 == 0 :
+            print(diff)
+            percent_complete(self.model.it,self.duration,title=f'Braitenberg Experiment ERR:{self.model.brain.prediction_error:.4f} S/IT:{diff:.5f}',color='y',bar_width=30)
+
         self.tracker.iterate(self)
         if self.model.it > self.duration :
             self.end()

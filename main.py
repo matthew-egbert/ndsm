@@ -6,7 +6,7 @@ from kivy.clock import Clock
 from back_and_forth_experiment import BackAndForthExperiment
 from back_and_forth_body import BackAndForthBody
 from braitenberg_experiment import BraitenbergExperiment
-from pattern_experiment import PatternExperiment
+from pattern_experiment import NoTrainingExperiment, PatternExperiment
 
 if platform == 'linux':
     ratio = 2.0
@@ -44,7 +44,7 @@ class Model():
     def __init__(self, headless = False, experiment_class = None, *args, **kwargs):
         self.paused = False
         self.seed = np.random.randint(0,1000)
-        self.seed = 6
+        self.seed = 3
         print(f"SEED: {self.seed}")
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
@@ -135,6 +135,8 @@ if __name__ == '__main__':
     
     if args.experiment == 'pattern':
         experiment = PatternExperiment
+    if args.experiment == 'no_training':
+        experiment = NoTrainingExperiment
     elif args.experiment == 'back_and_forth':
         experiment = BackAndForthExperiment
     elif args.experiment == 'braitenberg':

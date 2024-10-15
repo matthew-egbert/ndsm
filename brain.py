@@ -75,7 +75,6 @@ class Brain(object) :
 
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
         
-
         self.device = "cuda" ; print(f"Using {self.device} device")
         self.n_model = my_nn.to(self.device)
         self.learning_rate = exp(self.learning_rate_exponent)
@@ -97,6 +96,11 @@ class Brain(object) :
 
         self.training_input_matrix = np.zeros((self.β,nn_input_size))
         self.training_output_matrix = np.zeros((self.β,nn_output_size))
+
+        # for parameter in self.n_model.parameters():
+        #     print(parameter.shape)
+        # quit()
+
 
         nn_log = create_log_file('nn_properties')
         nn_log.write(str(my_nn))

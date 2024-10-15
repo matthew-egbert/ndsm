@@ -1,9 +1,9 @@
 NeuralNetwork(
   (linear_relu_stack): Sequential(
-    (0): Linear(in_features=128, out_features=101, bias=True)
+    (0): Linear(in_features=192, out_features=136, bias=True)
     (1): ReLU()
-    (2): Linear(in_features=101, out_features=101, bias=True)
+    (2): Linear(in_features=136, out_features=136, bias=True)
     (3): ReLU()
-    (4): Linear(in_features=101, out_features=16, bias=True)
+    (4): Linear(in_features=136, out_features=8, bias=True)
   )
-)self.N_SENSORS: 2self.N_MOTORS: 2self.Ω: 32self.β: 512
+)self.N_SENSORS: 1self.N_MOTORS: 2self.Ω: 64self.β: 512

@@ -62,6 +62,30 @@
         },
 
         {
+            "name": "NO TRAINING [GUI]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--experiment", "no_training"]
+        },
+        {
+            "name": "NO TRAINING [HEADLESS]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": ["--", "--headless", "--experiment", "no_training"]
+        },
+        {
+            "name": "NO TRAINING [PLOT RESULTS]",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "pattern_experiment.py",
+            "console": "integratedTerminal"
+        },
+
+        {
             "name": "BRAITENBERG [GUI]",
             "type": "debugpy",
             "request": "launch",

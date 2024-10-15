@@ -1,7 +1,7 @@
 from pylab import *
 
 class EmptyWorld :
-    def __init__(self):
+    def __init__(self, model):
         self.r = 5.0
         self.walls = []
 
@@ -45,7 +45,7 @@ class BraitenbergWorld(EmptyWorld) :
         S = -1.0 * self.r
         N =  1.0 * self.r
 
-        M = np.cos(0.015*self.model.it) * 1.5
+        M = np.cos(0.015*self.model.it) * 1.618 * 0.3## golden ratio
         r = 0.5
         #print(M)
 
@@ -57,8 +57,8 @@ class BraitenbergWorld(EmptyWorld) :
                         ((W,N),(E,N)),
                         ((W,S),(E,S)),
 
-                        ((M-r,N),(M,0.6*N)),
-                        ((M+r,N),(M,0.6*N)),
+                        ((M-r,N),(M,0.4*N)),
+                        ((M+r,N),(M,0.4*N)),
 
                         ((W,c*N),(c*W,N)),
                         ((E,c*N),(c*E,N)),
