@@ -14,5 +14,5 @@ module load Python/3.11.3-gimkl-2022a
 source /home/megb269/ndsmvenv/bin/activate
 cd /home/megb269/repos/ndsm
 pwd
-python3 --headless --experiment light --seed $SLURM_ARRAY_TASK_ID
+python3 main.py --headless --experiment light --seed $SLURM_ARRAY_TASK_ID
 #python3 evolve.py $SLURM_ARRAY_TASK_ID        
