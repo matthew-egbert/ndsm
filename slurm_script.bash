@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 #SBATCH --job-name LAG_evolution
-#SBATCH -A uoa00487         # Project Account
+#SBATCH -A uoa04260         # Project Account
 #SBATCH -J JobArray
 #SBATCH --time=12:00:00     # Walltime
 #SBATCH --mem-per-cpu=1G

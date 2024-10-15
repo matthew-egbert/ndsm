@@ -4,7 +4,7 @@ import pickle
 
 from experiments.plotters.plotting_utils import arena_plot
 
-def position_plot(path,α=0,ω=-1) :
+def position_plot(path,α=0,ω=-1,fast=True) :
     figure()
     xlim(-5,5)
     ylim(-5,5)
@@ -25,14 +25,17 @@ def position_plot(path,α=0,ω=-1) :
     if ω < 0 :
         ω = len(time)+ω+1
 
-    for σ in range(α,ω):
+    if fast :
+        arena_plot(x[α:ω],y[α:ω],-5,5,-5,5,alpha=0.5,color='k')
+    else :
+        for σ in range(α,ω):
             #percent_complete(σ,len(time),title='Plotting Position',color='y',bar_width=30)
             if σ < training_stop_iteration :
                 color = 'c'
             else :
                 color = 'k'
             arena_plot(x[σ:σ+2],y[σ:σ+2],-5,5,-5,5,alpha=0.5,color=color)
-            #arena_plot(x[σ:σ+step],y[σ:σ+step],alpha=0.1,color=color)
+
 
     tight_layout()
     savefig(path+f'position_{α}-{ω}.png',dpi=300)

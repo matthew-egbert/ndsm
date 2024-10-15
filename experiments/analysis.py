@@ -21,8 +21,11 @@ def analyse_oscillation(path) :
 
 def analyse_light(path) :
     error_plot(path)
-    position_plot(path,0,-1)
-    sms_timeseries_plot(path,0,-1)
+    tot = 250000
+    α = int(tot*0.25)
+    ω = int(tot*0.5)
+    position_plot(path,α,ω)
+    sms_timeseries_plot(path,α,ω)
 
     
 def analyse(path) :
@@ -38,7 +41,7 @@ def analyse(path) :
 
 if __name__ == '__main__' :
     ## just for testing
-    path = 'results/LightExperiment_7/'
+    path = 'results/LightExperiment_0/'
     analyse(path)
 
     
