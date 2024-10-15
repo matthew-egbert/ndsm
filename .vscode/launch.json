@@ -10,29 +10,29 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "back_and_forth"]
+            "args": ["--", "--experiment", "oscillation"]
         },
         {
-            "name": "B&F [GUI]",
+            "name": "Osc. [GUI]",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "back_and_forth"]
+            "args": ["--", "--experiment", "oscillation"]
         },
         {
-            "name": "B&F [HEADLESS]",
+            "name": "Osc. [HEADLESS]",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "back_and_forth"]
+            "args": ["--", "--headless", "--experiment", "oscillation"]
         },
         {
-            "name": "B&F [PLOT RESULTS]",
+            "name": "Osc. [PLOT RESULTS]",
             "type": "debugpy",
             "request": "launch",
-            "program": "back_and_forth_experiment.py",
+            "program": "oscillation_experiment.py",
             "console": "integratedTerminal"
         },
 
@@ -85,29 +85,29 @@
             "console": "integratedTerminal"
         },
 
-        {
-            "name": "BRAITENBERG [GUI]",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "args": ["--", "--experiment", "braitenberg"]
-        },
-        {
-            "name": "BRAITENBERG [HEADLESS]",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "braitenberg"]
-        },
-        {
-            "name": "BRAITENBERG [PLOT RESULTS]",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "braitenberg_experiment.py",
-            "console": "integratedTerminal"
-        },
+        // {
+        //     "name": "BRAITENBERG [GUI]",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "main.py",
+        //     "console": "integratedTerminal",
+        //     "args": ["--", "--experiment", "braitenberg"]
+        // },
+        // {
+        //     "name": "BRAITENBERG [HEADLESS]",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "main.py",
+        //     "console": "integratedTerminal",
+        //     "args": ["--", "--headless", "--experiment", "braitenberg"]
+        // },
+        // {
+        //     "name": "BRAITENBERG [PLOT RESULTS]",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "braitenberg_experiment.py",
+        //     "console": "integratedTerminal"
+        // },
 
 
         {

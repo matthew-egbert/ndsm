@@ -1,3 +1,4 @@
+from experiments.analysis import analyse
 from tracker import TrackedValue,TrackingManager
 import numpy as np
 from pylab import *
@@ -18,7 +19,7 @@ class Experiment(object):
         self.START           = lambda exp: exp.model.it == 0
         self.END             = lambda exp: exp.model.it == exp.duration-1
 
-        self.tracker.add_pickle_obj('experiment class',self.name)
+        self.tracker.add_pickle_obj('experiment',self.name)
 
 
     def add_default_trackers(self) :
@@ -44,5 +45,6 @@ class Experiment(object):
     def end(self) :
         print('Experiment completed.')
         self.tracker.save()
+        analyse(self.model.OUTPUT_DIR)
         if self.model.headless :
             quit()

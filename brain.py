@@ -5,8 +5,8 @@ import torch
 from torch import nn
 from body import Body
 from discval import OneHotter
-from plotting_utils import better_colorbar
-from utils import create_log_file
+from experiments.plotters.plotting_utils import better_colorbar
+#from utils.utils import create_log_file
 
 import line_profiler
 
@@ -90,10 +90,10 @@ class Brain(object) :
         self.output_probabilities_h = np.zeros((nn_output_size,self.model.TIMESERIES_LENGTH))
         self.most_recent_output = np.zeros(nn_output_size)
 
-        self.span_log = create_log_file('span')
-        self.input_log = create_log_file('input')
-        self.output_log = create_log_file('output')
-        self.not_first_choice_log = create_log_file('not_first_choice_events')
+        # self.span_log = create_log_file('span')
+        # self.input_log = create_log_file('input')
+        # self.output_log = create_log_file('output')
+        # self.not_first_choice_log = create_log_file('not_first_choice_events')
 
         self.training_input_matrix = np.zeros((self.β,nn_input_size))
         self.training_output_matrix = np.zeros((self.β,nn_output_size))
@@ -103,13 +103,13 @@ class Brain(object) :
         # quit()
 
 
-        nn_log = create_log_file('nn_properties')
-        nn_log.write(str(my_nn))
-        nn_log.write(f'self.N_SENSORS: {self.N_SENSORS}')
-        nn_log.write(f'self.N_MOTORS: {self.N_MOTORS}')
-        nn_log.write(f'self.Ω: {self.Ω}')
-        nn_log.write(f'self.β: {self.β}')
-        nn_log.close()
+        # nn_log = create_log_file('nn_properties')
+        # nn_log.write(str(my_nn))
+        # nn_log.write(f'self.N_SENSORS: {self.N_SENSORS}')
+        # nn_log.write(f'self.N_MOTORS: {self.N_MOTORS}')
+        # nn_log.write(f'self.Ω: {self.Ω}')
+        # nn_log.write(f'self.β: {self.β}')
+        # nn_log.close()
 
     def get_input_output_columns(self, τ : int=0, mod=None) :
         """

@@ -1,6 +1,6 @@
 from pylab import *
 from scipy.spatial.distance import cdist 
-from SweepIntersectorLib.SweepIntersector import SweepIntersector
+from utils.SweepIntersectorLib.SweepIntersector import SweepIntersector
 from discval import DiscVal, OneHotter
 import copy
 

@@ -4,9 +4,8 @@ from kivy.config import Config
 from kivy.clock import Clock
 import os
 
-from experiments.back_and_forth_experiment import BackAndForthExperiment
-from back_and_forth_body import BackAndForthBody
-from experiments.braitenberg_experiment import BraitenbergExperiment
+from experiments.oscillation_experiment import OscillationExperiment
+from oscillation_body import OscillationBody
 from experiments.pattern_experiment import NoTrainingExperiment, PatternExperiment
 
 if platform == 'linux':
@@ -116,7 +115,6 @@ class Model():
 if __name__ == '__main__':
     import argparse
 
-
     parser = argparse.ArgumentParser("simple_example")
     #parser.add_argument("counter", help="An integer will be increased by 1 and printed.", type=int)
     parser.add_argument("--headless", help="Run in headless mode.", action="store_true")
@@ -128,10 +126,10 @@ if __name__ == '__main__':
         experiment = PatternExperiment
     if args.experiment == 'no_training':
         experiment = NoTrainingExperiment
-    elif args.experiment == 'back_and_forth':
-        experiment = BackAndForthExperiment
-    elif args.experiment == 'braitenberg':
-        experiment = BraitenbergExperiment
+    elif args.experiment == 'oscillation':
+        experiment = OscillationExperiment
+    # elif args.experiment == 'braitenberg':
+    #     experiment = BraitenbergExperiment
     else :
         experiment = PatternExperiment
 
