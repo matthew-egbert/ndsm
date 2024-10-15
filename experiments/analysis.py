@@ -1,12 +1,11 @@
 import pickle
 from pylab import *
-from plotters.oscillation_network_plot import oscillation_network_plots
-from plotters.error_plot import error_plot
-from plotters.position_time_slices_plot import position_time_slices_plot
-from plotters.pattern_publication_plots import pattern_publication_plots
-from plotters.sms_slice_plot import sms_slice_plot
-from plotters.position_plot import position_plot
-  
+from experiments.plotters.oscillation_position_comparison_plot import oscillation_position_comparison_plot
+from experiments.plotters.oscillation_network_plot import oscillation_network_plots
+from experiments.plotters.error_plot import error_plot
+from experiments.plotters.position_time_slices_plot import position_time_slices_plot
+from experiments.plotters.pattern_publication_plots import pattern_publication_plots
+
 def analyse_pattern(path) :    
     #error_plot(path) #a special one is made in publication plots...
     #position_plot(path)
@@ -14,6 +13,8 @@ def analyse_pattern(path) :
     pattern_publication_plots(path)
 
 def analyse_oscillation(path) :
+    error_plot(path)
+    oscillation_position_comparison_plot(path)
     oscillation_network_plots(path)
 
 def analyse(path) :
@@ -26,8 +27,8 @@ def analyse(path) :
         print('Unknown experiment type')
 
 if __name__ == '__main__' :
-    path = 'results/PatternExperiment_8/'
-    analyse_pattern(path)
+    path = 'results/OscillationExperiment_8/'
+    analyse(path)
 
     
             

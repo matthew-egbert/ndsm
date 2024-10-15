@@ -1,7 +1,4 @@
 import pickle
-from experiments.analysis import position_plot_range
-
-
 from pylab import *
 
 def position_plot_range(path,α=0,ω=1024*4) :
@@ -18,7 +15,7 @@ def position_plot_range(path,α=0,ω=1024*4) :
     xlabel('time')
     xlim(time[α],time[ω])
 
-def osc_position_comparison_plot(path) :
+def oscillation_position_comparison_plot(path) :
     figure(figsize=(7,2.5))
 
     subplot2grid((2,1),(0,0))

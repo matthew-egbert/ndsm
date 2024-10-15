@@ -4,7 +4,7 @@ import networkx as nx
 
 from discval import DiscVal, OneHotter
 
-def network_plot(sms,α=0,ω=-1,path='',filename='network.png',label='') :
+def network_plot(time,sms,α=0,ω=-1,path='',filename='network.png',label='') :
     if α < 0 :
         α = len(sms)+α
     if ω < 0 :
@@ -96,6 +96,7 @@ def network_plot(sms,α=0,ω=-1,path='',filename='network.png',label='') :
     savefig(path+filename,dpi=300)
 
 def oscillation_network_plots(path) :
+    time = np.load(path+'time.npy')
     sms = np.load(path+'sms.npy')
     po = pickle.load(open(path+'pickle_objs.pkl','rb'))
     DT = po['DT']
@@ -103,5 +104,5 @@ def oscillation_network_plots(path) :
     p = int(3.11//DT) ## oscilalation length in iterations (approximated visually)
     n = 36 ## number of oscillations
     print(sms.shape)
-    network_plot(sms,0,p*n,path=path,filename='network_start.png',label='A')
-    network_plot(sms,-p*n,-1,path=path,filename='network_end.png',label='B')
+    network_plot(time,sms,0,p*n,path=path,filename='network_start.png',label='A')
+    network_plot(time,sms,-p*n,-1,path=path,filename='network_end.png',label='B')
