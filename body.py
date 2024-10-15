@@ -130,7 +130,7 @@ class Body(object) :
         self.α = np.random.rand()*2.0*np.pi
 
 if __name__ == '__main__' :
-    from main import Model
+    from model import Model
     r = Body(Model())
     r.debug_plot()
     show()

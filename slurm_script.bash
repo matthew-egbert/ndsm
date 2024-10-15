@@ -10,4 +10,5 @@
 
 module load Python/3.11.3-gimkl-2022a
 pwd
+#python3 main.py --headless --experiment light --seed $SLURM_ARRAY_TASK_ID
 #python evolve.py $SLURM_ARRAY_TASK_ID

@@ -1,5 +1,7 @@
 from body import Body
-from pylab import concatenate
+from pylab import *
+
+from discval import DiscVal
 
 class PatternBody(Body) :
     def __init__(self, model, pattern_length, **kwargs) :

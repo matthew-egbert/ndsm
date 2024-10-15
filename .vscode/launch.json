@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "oscillation"]
+            "args": ["--experiment", "oscillation"]
         },
         {
             "name": "Osc. [GUI]",
@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "oscillation"]
+            "args": ["--experiment", "oscillation"]
         },
         {
             "name": "Osc. [HEADLESS]",
@@ -26,7 +26,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "oscillation"]
+            "args": ["--headless", "--experiment", "oscillation"]
         },
         
 
@@ -37,7 +37,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "pattern"]
+            "args": ["--experiment", "pattern"]
         },
         {
             "name": "PATTERN [HEADLESS]",
@@ -45,7 +45,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "pattern"]
+            "args": ["--headless", "--experiment", "pattern"]
         },
         
 
@@ -55,7 +55,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "no_training"]
+            "args": ["--experiment", "no_training"]
         },
         {
             "name": "NO TRAINING [HEADLESS]",
@@ -63,7 +63,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "no_training"]
+            "args": ["--headless", "--experiment", "no_training"]
         },
         
 
@@ -73,7 +73,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--experiment", "light"]
+            "args": ["--experiment", "light"]
         },
         {
             "name": "LIGHT [HEADLESS]",
@@ -81,7 +81,7 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "light"]
+            "args": ["--headless", "--experiment", "light"]
         },
         
         {
@@ -90,7 +90,7 @@
             "request": "launch",
             "program": "experiments/analysis.py",
             "console": "integratedTerminal",
-            //"args": ["--", "--headless", "--experiment", "pattern"]
+            //"args": ["--headless", "--experiment", "pattern"]
         },
 
 
@@ -100,7 +100,7 @@
             "request": "launch",
             "program": "python -m cProfile main.py",
             "console": "integratedTerminal",
-            "args": ["--", "--headless", "--experiment", "pattern"]
+            "args": ["--headless", "--experiment", "pattern"]
         },
     ]
 }
