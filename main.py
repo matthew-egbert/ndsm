@@ -4,6 +4,7 @@ from kivy.config import Config
 from kivy.clock import Clock
 import os
 
+from experiments.light_experiment import LightExperiment
 from experiments.oscillation_experiment import OscillationExperiment
 from oscillation_body import OscillationBody
 from experiments.pattern_experiment import NoTrainingExperiment, PatternExperiment
@@ -128,8 +129,8 @@ if __name__ == '__main__':
         experiment = NoTrainingExperiment
     elif args.experiment == 'oscillation':
         experiment = OscillationExperiment
-    # elif args.experiment == 'braitenberg':
-    #     experiment = BraitenbergExperiment
+    elif args.experiment == 'light':
+        experiment = LightExperiment
     else :
         experiment = PatternExperiment
 

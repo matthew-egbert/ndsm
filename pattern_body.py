@@ -1,7 +1,5 @@
 from body import Body
-from pylab import concatenate, np
-
-from discval import DiscVal
+from pylab import concatenate
 
 class PatternBody(Body) :
     def __init__(self, model, pattern_length, **kwargs) :
@@ -12,8 +10,8 @@ class PatternBody(Body) :
         lm = DiscVal(allowed_motor_values, 0, name = "LM")
         rm = DiscVal(allowed_motor_values, 0, name = "RM")
 
-        super().__init__(model, radius = 0.5, sensor_length=1.0, sensor_βs=[0], 
-                         sensors = [os], motors = [lm,rm], **kwargs)
+        super().__init__(model, radius = 0.5, sensor_length=1.0, sensor_βs=[0],
+                        sensors = [os], motors = [lm,rm], **kwargs)
         
         self.pattern_length = pattern_length
         z = 0.0
@@ -23,8 +21,7 @@ class PatternBody(Body) :
         B = (b,b)
         L = (b,f)
         R = (f,b)
-        #self.moves = [(f,f),(f,f),(f,f),(b,b),(b,f),(f,b)]
-        #self.pattern = [self.moves[np.random.randint(len(self.moves))] for idx in range(pattern_length)]
+        
         self.pattern = []
         for idx in range(1) :
             self.pattern.extend([F,F,F,F,F,R,R,R,R,R,R,R,R,R,F,F])
@@ -35,19 +32,11 @@ class PatternBody(Body) :
         for idx in range(1) :
             self.pattern.extend([F,L,L,F,L,L,F,L,L,F,L,L,F,L,L,F])
 
-
-    def update_sensors(self):
-        # β = np.pi/4
-        # a = self.α % (2*np.pi)
-        # if a < (np.pi/2 + β) and a > (np.pi/2 - β) :
-        #     self.sensors[0].value = np.random.choice([0.0,1.0])
-        # else :
-        #     self.sensors[0].value = 0.0
-        
-        if len(self.sensors) > 0 :
-            self.sensors[0].value = 0.0
-
     def training_phase(self):
         motors = self.pattern[self.model.it % self.pattern_length]
         self.next_motors[0].value = motors[0]
         self.next_motors[1].value = motors[1]
+    
+    def update_sensors(self):
+        """ By default, the sensor does nothing. """
+        self.sensors[0].value = 0.0
