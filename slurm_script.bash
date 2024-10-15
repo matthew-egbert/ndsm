@@ -3,7 +3,7 @@
 #SBATCH --job-name LAG_evolution
 #SBATCH -A uoa04260         # Project Account
 #SBATCH -J JobArray
-#SBATCH --time=12:00:00     # Walltime
+#SBATCH --time=00:00:15     # Walltime
 #SBATCH --mem-per-cpu=1G
 #SBATCH --array=1-32      # Array definition
 #SBATCH --qos=debug          # debug QOS for high priority job tests
