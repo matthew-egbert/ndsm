@@ -3,10 +3,10 @@ from kivy import platform
 from kivy.config import Config
 from kivy.clock import Clock
 
-from back_and_forth_experiment import BackAndForthExperiment
+from experiments.back_and_forth_experiment import BackAndForthExperiment
 from back_and_forth_body import BackAndForthBody
-from braitenberg_experiment import BraitenbergExperiment
-from pattern_experiment import NoTrainingExperiment, PatternExperiment
+from experiments.braitenberg_experiment import BraitenbergExperiment
+from experiments.pattern_experiment import NoTrainingExperiment, PatternExperiment
 
 if platform == 'linux':
     ratio = 2.0
@@ -30,15 +30,10 @@ from threading import Thread
 from body import Body
 from brain import Brain
 from world import BraitenbergWorld, EmptyWorld
-from experiment import Experiment
+from experiments.experiment import Experiment
 
 import torch
 import cProfile
-
-# from kivy.logger import Logger
-# Logger.setLevel(LOG_LEVELS["debug"])
-# Logger.info('title: This is a info message.')
-# Logger.debug('title: This is a debug message.')
 
 class Model():
     def __init__(self, headless = False, experiment_class = None, *args, **kwargs):
@@ -76,16 +71,6 @@ class Model():
         else :
             while True :
                 self.iterate()
-
-        #self.brain.train_on_file("sms_recording.npy")
-        # self.thread = Thread(target=self.run_clock, daemon=True)
-        # self.thread.start()
-        #print('hi')
-
-
-    def run_clock(self):        
-        print("Clock event triggered"+str(self.mm))
-        self.mm += 1
         
 
     def init_env_drawables(self) :
@@ -149,6 +134,6 @@ if __name__ == '__main__':
         m = Model(headless=True, experiment_class=experiment)        
     else:       
         ## HEADFUL
-        from rvit.core import init_rvit
+        from rvit.core import init_rvit # type: ignore
         m = Model(experiment_class=experiment)
         init_rvit(m,rvit_file='rvit.kv',window_size=(500,250))
