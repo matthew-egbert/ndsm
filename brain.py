@@ -76,7 +76,7 @@ class Brain(object) :
 
         my_nn = NeuralNetwork(nn_input_size, nn_hidden_size, nn_output_size)
         
-        self.device = "cuda" ; print(f"Using {self.device} device")
+        self.device = "cpu" ; print(f"Using {self.device} device") ## cuda
         self.ffnn = my_nn.to(self.device) ## feedforward neural network
         self.learning_rate = exp(self.learning_rate_exponent)
         self.optimizer = torch.optim.SGD(self.ffnn.parameters(), lr=self.learning_rate, momentum=0.9)
