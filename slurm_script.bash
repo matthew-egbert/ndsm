@@ -3,7 +3,7 @@
 #SBATCH --job-name LAG_evolution                                                              
 #SBATCH -A uoa04260         # Project Account                                                 
 #SBATCH -J JobArray                                                                           
-#SBATCH --time=00:01:00     # Walltime                                                        
+#SBATCH --time=00:05:00     # Walltime                                                        
 #SBATCH --mem-per-cpu=1G                                                                      
 #SBATCH --array=1-16      # Array definition                                                     
 #SBATCH --output=/home/megb269/outputs/output_%a.out                                          
