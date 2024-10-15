@@ -6,7 +6,7 @@
 #SBATCH --time=00:00:15     # Walltime                                                        
 #SBATCH --mem-per-cpu=1G                                                                      
 #SBATCH --array=1-32      # Array definition                                                     
-#SBATCH --qos=debug          # debug QOS for high priority job tests                          
+# # # #SBATCH --qos=debug          # debug QOS for high priority job tests                          
 #SBATCH --output=/home/megb269/outputs/output_%a.out                                          
 #SBATCH --error=/home/meg269/outputs/output_%a.err                                            
 
