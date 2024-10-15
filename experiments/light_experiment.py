@@ -16,7 +16,7 @@ from world import EmptyWorld
 class LightExperiment(Experiment):
     def __init__(self,model,name=None) :
         super().__init__(model,name)
-        self.duration                = 256000
+        self.duration                = 256000 /100
         self.training_stop_iteration = 0
         
         ## LIGHT EXPERIMENT

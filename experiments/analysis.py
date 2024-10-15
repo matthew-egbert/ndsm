@@ -21,9 +21,10 @@ def analyse_oscillation(path) :
 
 def analyse_light(path) :
     error_plot(path)
-    tot = 250000
-    α = int(tot*0.25)
-    ω = int(tot*0.5)
+    time = np.load(path+'time.npy')
+    tot = len(time)
+    α = 0#int(tot*0.5)
+    ω = -1#int(tot*0.5)
     position_plot(path,α,ω)
     sms_timeseries_plot(path,α,ω)
 

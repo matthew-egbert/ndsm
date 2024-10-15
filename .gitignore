@@ -106,4 +106,4 @@ venv.bak/
 
 **/.rvit/*
 nn_output_field/**
-results/**
+**/results/**
