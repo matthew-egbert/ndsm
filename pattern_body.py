@@ -24,15 +24,25 @@ class PatternBody(Body) :
         L = (b,f)
         R = (f,b)
         
+        # self.pattern = []
+        # for idx in range(1) :
+        #     self.pattern.extend([F,F,F,F,F,R,R,R,R,R,R,R,R,R,F,F])
+        # for idx in range(1) :
+        #     self.pattern.extend([R,F,R,F,R,F,R,R,B,B,B,F,F,F,F,L])
+        # for idx in range(1) :
+        #     self.pattern.extend([B,R,B,R,B,R,B,R,B,R,B,R,B,R,B,R])
+        # for idx in range(1) :
+        #     self.pattern.extend([F,L,L,F,L,L,F,L,L,F,L,L,F,L,L,F])
+
         self.pattern = []
         for idx in range(1) :
-            self.pattern.extend([F,F,F,F,F,R,R,R,R,R,R,R,R,R,F,F])
+            self.pattern.extend([F,F,F,F,F,F,F,F,L,L,L,L,L,L,L,L])
         for idx in range(1) :
-            self.pattern.extend([R,F,R,F,R,F,R,R,B,B,B,F,F,F,F,L])
+            self.pattern.extend([F,F,F,L,L,L,L,L,L,L,L,F,F,F,F,F])
         for idx in range(1) :
-            self.pattern.extend([B,R,B,R,B,R,B,R,B,R,B,R,B,R,B,R])
+            self.pattern.extend([L,L,L,L,L,L,L,L,F,R,F,R,F,R,F,R])
         for idx in range(1) :
-            self.pattern.extend([F,L,L,F,L,L,F,L,L,F,L,L,F,L,L,F])
+            self.pattern.extend([F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F])
 
     def training_phase(self):
         motors = self.pattern[self.model.it % self.pattern_length]

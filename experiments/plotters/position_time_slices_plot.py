@@ -24,7 +24,7 @@ def position_time_slices_plot(path) :
         α = i*section_length;
         ω = (i+1)*section_length;
         #title(f'$t\\in${time[α]:.1f}$-${time[ω]:.1f}')
-        if α < training_stop_iteration :
+        if (α+ω)/2 < training_stop_iteration :
             color = 'r'
         else :
             color = 'k'

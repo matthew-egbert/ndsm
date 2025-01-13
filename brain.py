@@ -193,7 +193,7 @@ class Brain(object) :
     ##@line_profiler.profile
     def learn(self) :
         if self.model.it == self.model.experiment.training_stop_iteration :
-            print('CHANGING OPTIMIZER!!!')
+            print(f'CHANGING OPTIMIZER!!! (iteration={self.model.it})')
             self.optimizer = torch.optim.SGD(self.ffnn.parameters(), lr=self.learning_rate, momentum=0.0)
 
         self.ffnn.train()

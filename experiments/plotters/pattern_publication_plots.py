@@ -27,7 +27,7 @@ def pattern_publication_plots(path) :
         #text(-0.1,1.05 f'$t\in{α*DT:.1f},{ω*DT:.1f}$',fontsize=8,rotation=0,transform=fig.transFigure)
         #ylabel('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index],fontsize=8,rotation=0)
         fig = plt.gcf()
-        if index < 26 :
+        if index < 26*2 :
             text(-0.15, 0.8, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'[index], fontsize=7, rotation=0, transform=gca().transAxes,va='center',ha='center')
             text(-0.15, 0.2, f'{α*DT:.2f}-{ω*DT:.2f}', fontsize=7, rotation=0, transform=gca().transAxes,va='center',ha='center')
         plt.box(False)

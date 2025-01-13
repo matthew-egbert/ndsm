@@ -15,7 +15,7 @@ from world import EmptyWorld
 class PatternExperiment(Experiment):
     def __init__(self,model,name=None) :
         super().__init__(model,name)
-        self.duration                = 25600  
+        self.duration                = 2560*4  
         self.training_stop_iteration =  int(self.duration // 4)
 
         ## PATTERN EXPERIMENT
@@ -61,6 +61,7 @@ class NoTrainingExperiment(PatternExperiment) :
     def __init__(self,model,name=None) :
         super().__init__(model,name=name)
         self.TRAINING_STOP_ITERATION = 0
+        self.model.body.TRAINING_PHASE = False
         self.duration = 102400*4
 
 
